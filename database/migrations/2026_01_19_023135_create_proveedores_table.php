@@ -4,13 +4,11 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
+    public function up(): void {
         Schema::create('proveedores', function (Blueprint $table) {
             // $table->id();
             $table->string('ruc', 13)->primary();
@@ -18,17 +16,19 @@ return new class extends Migration
             $table->string('email');
             $table->string('telefono_principal');
             $table->string('telefono_secundario');
+
             $table->timestamps();
         });
 
         Schema::create('proveedor_direcciones', function (Blueprint $table) {
             $table->id();
-            $table->string('provincia');            
-            $table->string('ciudad');            
-            $table->string('calle');            
+            $table->string('provincia');
+            $table->string('ciudad');
+            $table->string('calle');
             $table->string('referencia');
             $table->string('proveedor_ruc', 13);
             $table->foreign('proveedor_ruc')->references('ruc')->on('proveedores');
+
             $table->timestamps();
         });
     }
@@ -36,8 +36,8 @@ return new class extends Migration
     /**
      * Reverse the migrations.
      */
-    public function down(): void
-    {
+    public function down(): void {
+        Schema::dropIfExists('proveedor_direcciones');
         Schema::dropIfExists('proveedores');
     }
 };

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('proveedor_ruc', 13);
             $table->foreign('proveedor_ruc')->references('ruc')->on('proveedores');
             $table->unique(['producto_id', 'proveedor_ruc']);
+
             $table->timestamps();
         });
     }
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('productos_proveedores');
+        Schema::dropIfExists('producto_proveedores');
     }
 };
