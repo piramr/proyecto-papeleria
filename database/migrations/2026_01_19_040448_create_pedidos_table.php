@@ -34,6 +34,7 @@ return new class extends Migration {
             $table->unsignedInteger('cantidad');
             $table->decimal('precio_compra', 10, 2);
             $table->decimal('total', 10, 2);
+            $table->string('descripcion')->nullable();
             $table->string('proveedor_ruc', 13);
             $table->foreign('proveedor_ruc')->references('ruc')->on('proveedores');
             $table->foreignId('producto_id')->constrained('productos');

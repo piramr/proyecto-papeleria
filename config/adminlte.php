@@ -258,7 +258,7 @@ return [
     */
 
     'use_route_url' => false,
-    'dashboard_url' => 'dashboard',
+    'dashboard_url' => 'admin/dashboard',
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -318,64 +318,64 @@ return [
         ],
         [
             'text' => 'Dashboard',
-            'url'  => 'dashboard',
+            'url'  => '/admin/dashboard',
             'icon' => 'fas fa-fw fa-tachometer-alt', // Icono de tablero/velocímetro
         ],
         [
             'text'  => 'Análisis',
-            'url'   => 'analisis',
+            'url'   => '/admin/analisis',
             'icon'  => 'fas fa-fw fa-chart-bar', // Gráfico de barras
             'color' => 'white',
         ],
         [
             'text'  => 'Ventas',
-            'url'   => 'ventas',
+            'url'   => '/admin/ventas',
             'icon'  => 'fas fa-fw fa-shopping-cart', // Carrito de compras
             'color' => 'white',
         ],
         [
             'text'  => 'Compras',
-            'url'   => 'compras',
+            'url'   => '/admin/compras',
             'icon'  => 'fas fa-fw fa-cash-register', // Caja registradora
             'color' => 'white',
         ],
         [
             'text'    => 'Inventario',
-            'url'     => 'inventario',
+            'url'     => '/admin/inventario',
             'icon'    => 'fas fa-fw fa-boxes', // Cajas de inventario
             'submenu' => [
                 [
+                    'text' => 'Proveedores',
+                    'url'  => '/admin/proveedores',
+                    'icon' => 'fas fa-fw fa-truck', // Camión de carga
+                ],
+                [
                     'text' => 'Productos',
-                    'url'  => 'productos',
+                    'url'  => '/admin/productos',
                     'icon' => 'fas fa-fw fa-tag', // Etiqueta de precio
                 ],
                 [
                     'text' => 'Categorías',
-                    'url'  => 'categorias',
+                    'url'  => '/admin/categorias',
                     'icon' => 'fas fa-fw fa-list-ul', // Lista
-                ],
-                [
-                    'text' => 'Proveedores',
-                    'url'  => 'proveedores',
-                    'icon' => 'fas fa-fw fa-truck', // Camión de carga
                 ],
             ],
         ],
         [
             'text'  => 'Gestionar usuarios',
-            'url'   => 'usuarios',
+            'url'   => '/admin/usuarios',
             'icon'  => 'fas fa-fw fa-users-cog', // Usuarios con engranaje
             'color' => 'white',
         ],
         [
             'text'  => 'Clientes',
-            'url'   => 'clientes',
+            'url'   => '/admin/clientes',
             'icon'  => 'fas fa-fw fa-user-friends', // Amigos/Clientes
             'color' => 'white',
         ],
         [
             'text'  => 'Reportes',
-            'url'   => 'reportes',
+            'url'   => '/admin/reportes',
             'icon'  => 'fas fa-fw fa-file-pdf', // Reportes
             'color' => 'white',
         ],
@@ -383,13 +383,23 @@ return [
         ['header' => 'account_settings'],
         [
             'text' => 'profile',
-            'url'  => 'user/profile',
+            'url'  => '/admin/perfil',
             'icon' => 'fas fa-fw fa-user-circle', // Usuario en círculo
         ],
         ['header' => 'Sistema'],
         [
+            'text' => 'Auditoria',
+            'url'  => 'admin/auditoria',
+            'icon' => 'fas fa-fw fa-eye',
+        ],
+        [
+            'text' => 'Logs',
+            'url'  => 'admin/logs',
+            'icon' => 'fas fa-fw fa-file',
+        ],
+        [
             'text' => 'Ajustes',
-            'url'  => 'admin/settings',
+            'url'  => 'admin/ajustes',
             'icon' => 'fas fa-fw fa-cog',
         ]
     ],

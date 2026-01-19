@@ -11,8 +11,18 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', fn() => view('admin.dashboard'))->name('admin.dashboard');
+    Route::get('admin/dashboard', fn() => view('admin.dashboard'))->name('admin.dashboard');
 
-    Route::get('/ventas', fn() => view('admin.ventas.show'));
-    Route::get('/analisis', fn() => view('admin.analisis.show'));
+    Route::get('/admin/ventas', fn() => view('admin.ventas.index'));
+    Route::get('/admin/analisis', fn() => view('admin.analisis.index'));
+    Route::get('/admin/compras', fn() => view('admin.compras.index'));
+    Route::get('/admin/productos', fn() => view('admin.inventario.productos'));
+    Route::get('/admin/categorias', fn() => view('admin.inventario.categorias'));
+    Route::get('/admin/proveedores', fn() => view('admin.proveedores.index'));
+    Route::get('/admin/usuarios', fn() => view('admin.usuarios.index'));
+    Route::get('/admin/clientes', fn() => view('admin.clientes.index'));
+    Route::get('/admin/reportes', fn() => view('admin.reportes.index'));
+    Route::get('/admin/perfil', fn() => view('admin.perfil.index'));
+
+    Route::get('/admin/ajustes', fn() => view('admin.ajustes.index'));
 });

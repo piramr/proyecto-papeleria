@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('layouts.app')
 
 @section('title', 'Ventas')
 
@@ -7,5 +7,5 @@
 @stop
 
 @section('content')
-    <p>Algo...</p>
+
 @stop
