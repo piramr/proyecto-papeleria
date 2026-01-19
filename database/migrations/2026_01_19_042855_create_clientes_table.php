@@ -16,11 +16,11 @@ return new class extends Migration
             $table->string('cedula', 10)->primary();
             $table->string('nombres');
             $table->string('apellidos');
-            $table->string('telefono', 15);
-            $table->string('email');
-            $table->string('genero', 20);
-            $table->date('fecha_nacimiento');
-            $table->string('direccion');
+            $table->string('telefono', 15)->unique()->nullable();
+            $table->string('email')->unique()->nullable();
+            $table->string('genero', 20)->nullable();
+            $table->date('fecha_nacimiento')->nullable();
+            $table->string('direccion')->nullable();
 
             $table->timestamps();
         });
