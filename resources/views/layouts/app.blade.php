@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+{{-- <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -42,4 +42,15 @@
 
         @livewireScripts
     </body>
-</html>
+</html> --}}
+{{-- resources/views/layouts/app.blade.php --}}
+@extends('adminlte::page')
+
+@section('css')
+    
+@stop
+
+@section('js')
+    {{-- Aquí puedes poner el script de wire:navigate que querías --}}
+    
+@stop
