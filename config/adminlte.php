@@ -363,9 +363,22 @@ return [
         ],
         [
             'text'  => 'Gestionar usuarios',
-            'url'   => '/admin/usuarios',
             'icon'  => 'fas fa-fw fa-users-cog', // Usuarios con engranaje
             'color' => 'white',
+            'submenu' => [
+                [
+                    'text'  => 'Usuarios',
+                    'url'   => '/admin/usuarios',
+                    'icon'  => 'fas fa-fw fa-users', // Usuarios con engranaje
+                    'color' => 'white',
+                ],
+                [
+                    'text'  => 'Roles',
+                    'url'   => '/admin/roles',
+                    'icon'  => 'fas fa-fw fa-user-check', // Usuarios con engranaje
+                    'color' => 'white',
+                ]
+            ]
         ],
         [
             'text'  => 'Clientes',
