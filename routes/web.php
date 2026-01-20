@@ -20,6 +20,7 @@ Route::middleware([
     Route::get('/admin/categorias', fn() => view('admin.inventario.categorias'));
     Route::get('/admin/proveedores', fn() => view('admin.proveedores.index'));
     Route::get('/admin/usuarios', fn() => view('admin.usuarios.index'));
+    Route::get('/admin/roles', fn() => view('admin.roles.index'));
     Route::get('/admin/clientes', fn() => view('admin.clientes.index'));
     Route::get('/admin/reportes', fn() => view('admin.reportes.index'));
     Route::get('/admin/perfil', fn() => view('admin.perfil.index'));
