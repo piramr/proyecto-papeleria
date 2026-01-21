@@ -14,8 +14,8 @@ return new class extends Migration {
             $table->string('ruc', 13)->primary();
             $table->string('nombre');
             $table->string('email');
-            $table->string('telefono_principal');
-            $table->string('telefono_secundario');
+            $table->string('telefono_principal', 10)->unique();
+            $table->string('telefono_secundario', 10)->unique()->nullable();
 
             $table->timestamps();
         });
