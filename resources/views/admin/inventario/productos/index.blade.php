@@ -13,9 +13,21 @@
 
         <div class="row mb-3">
             <div class="col-12">
-                <button type="button" class="btn btn-primary px-4 shadow-sm">
+                <button type="button" class="btn btn-primary px-4 shadow-sm" data-toggle="collapse" data-target="#formProducto">
                     <i class="fas fa-plus mr-2"></i> Agregar producto
                 </button>
+            </div>
+        </div>
+
+        {{-- FORMULARIO --}}
+        <div id="formProducto" class="collapse {{ $errors->any() ? 'show' : '' }}">
+            <div class="card card-outline card-primary shadow-sm">
+                <div class="card-header">
+                    <p class="text-dark mb-0">Ingrese los datos del producto</p>
+                </div>
+                <div class="card-body">
+                    @include('admin.inventario.productos.partials.form')
+                </div>
             </div>
         </div>
     </div>
@@ -45,8 +57,9 @@
                             </button>
                             <div class="dropdown-menu shadow border-0">
                                 <a class="dropdown-item categoria-item" data-id="">Todas</a>
-                                <a class="dropdown-item categoria-item" data-id="1">Papelería</a>
-                                <a class="dropdown-item categoria-item" data-id="2">Oficina</a>
+                                @foreach($categorias as $categoria)
+                                    <a class="dropdown-item categoria-item" data-id="{{ $categoria->id }}">{{ $categoria->nombre }}</a>
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -62,6 +75,12 @@
                         <span class="text-muted">registros</span>
                     </div>
 
+                </div>
+
+                {{-- INFO + PAGINACIÓN (ARRIBA) --}}
+                <div class="d-flex justify-content-between mb-2">
+                    <div id="dt-info-top"></div>
+                    <div id="dt-paging-top"></div>
                 </div>
 
                 {{-- TABLA --}}
@@ -83,10 +102,33 @@
                     </table>
                 </div>
 
+                {{-- INFO + PAGINACIÓN (ABAJO) --}}
+                <div class="d-flex justify-content-between mt-2">
+                    <div id="dt-info-bottom"></div>
+                    <div id="dt-paging-bottom"></div>
+                </div>
+
             </div>
         </div>
     </div>
 @stop
+
+<!-- MODAL PARA EDITAR PRODUCTO -->
+<div class="modal fade" id="modalEditarProducto" tabindex="-1" role="dialog" aria-labelledby="modalEditarProductoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title" id="modalEditarProductoLabel">Editar Producto</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="contenidoModal">
+                <!-- Se carga dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
 
 @section('js')
     <script>
@@ -96,20 +138,28 @@
 
             const table = $('#tablaProductos').DataTable({
                 processing: true,
-                serverSide: true,
-                responsive: false,
-                scrollX: true,
+                serverSide: false,
                 autoWidth: false,
+                paging: true,
+                info: true,
+                responsive: {
+                    details: {
+                        type: 'column',
+                        target: 'tr'
+                    }
+                },
+
+                pageLength: 10,
 
                 ajax: {
-                    url: '{{ route('productos.datatable') }}',
+                    url: '{{ route('productos.datatables') }}',
                     data: function(d) {
                         d.categoryid = categoryId;
                     }
                 },
 
                 columns: [{
-                        data: 'codigo'
+                        data: 'codigo_barras'
                     },
                     {
                         data: 'nombre'
@@ -118,10 +168,13 @@
                         data: 'categoria'
                     },
                     {
-                        data: 'stock'
+                        data: 'cantidad_stock'
                     },
                     {
-                        data: 'precio'
+                        data: 'precio_unitario',
+                        render: function(data) {
+                            return parseFloat(data).toFixed(2);
+                        }
                     },
                     {
                         data: 'iva'
@@ -130,7 +183,23 @@
                         data: 'proveedores'
                     },
                     {
-                        data: 'created_at'
+                        data: 'created_at',
+                        render: function(data) {
+                            if (!data) return '';
+
+                            let f = new Date(data);
+
+                            let d = String(f.getDate()).padStart(2, '0');
+                            let m = String(f.getMonth() + 1).padStart(2, '0');
+                            let y = f.getFullYear();
+
+                            let h = f.getHours();
+                            let min = String(f.getMinutes()).padStart(2, '0');
+                            let ampm = h >= 12 ? 'pm' : 'am';
+                            h = h % 12 || 12;
+
+                            return `${d}-${m}-${y} ${h}:${min}${ampm}`;
+                        }
                     },
                     {
                         data: 'acciones',
@@ -139,24 +208,25 @@
                     }
                 ],
 
-                dom: '<"row mb-2"' +
-                    '<"col-sm-12 col-md-6"i>' +
-                    '<"col-sm-12 col-md-6 text-md-right"p>' +
-                    '>' +
-                    '<"row"' +
-                    '<"col-sm-12"tr>' +
-                    '>' +
-                    '<"row mt-2"' +
-                    '<"col-sm-12 col-md-5"i>' +
-                    '<"col-sm-12 col-md-7 text-md-right"p>' +
-                    '>',
+                dom: 'rtip',
 
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
+                    url: '//cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json'
+                },
+
+                drawCallback: function() {
+                    $('#dt-info-top').html($('.dataTables_info'));
+                    $('#dt-info-bottom').html($('.dataTables_info'));
+
+                    $('#dt-paging-top').html($('.dataTables_paginate'));
+                    $('#dt-paging-bottom').html($('.dataTables_paginate'));
+                    
+                    // Inicializar tooltips
+                    $('[data-toggle="tooltip"]').tooltip();
                 }
             });
 
-            $('#customSearch').on('keyup', function() {
+            $('#customSearch').on('input search', function() {
                 table.search(this.value).draw();
             });
 
@@ -169,6 +239,57 @@
                 $('#btnCategoria').html('<i class="fas fa-filter mr-1 text-muted"></i> ' + $(this).text());
                 table.ajax.reload();
             });
+
+            // Editar producto
+            $(document).on('click', '.btnEditProducto', function() {
+                const productoId = $(this).data('id');
+                
+                $.ajax({
+                    url: '/productos/' + productoId + '/edit',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        $('#contenidoModal').html(data.html);
+                        $('#modalEditarProducto').modal('show');
+                        
+                        // Re-inicializar scripts del formulario
+                        setTimeout(() => {
+                            inicializarProveedores();
+                            togglePrecioOferta();
+                        }, 100);
+                    },
+                    error: function() {
+                        alert('Error al cargar el formulario de edición');
+                    }
+                });
+            });
+
+            // Eliminar producto
+            $(document).on('click', '.btnDeleteProducto', function() {
+                const productoId = $(this).data('id');
+                const productoNombre = $(this).data('nombre');
+
+                if (confirm('¿Estás seguro de que deseas eliminar el producto "' + productoNombre + '"? Esta acción no se puede deshacer.')) {
+                    $.ajax({
+                        url: '/productos/' + productoId,
+                        type: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        success: function() {
+                            table.ajax.reload();
+                            // Mostrar alerta de éxito
+                            alert('Producto eliminado correctamente');
+                        },
+                        error: function() {
+                            alert('Error al eliminar el producto');
+                        }
+                    });
+                }
+            });
+
+            // Inicializar proveedores cuando se carga la página
+            inicializarProveedores();
 
         });
     </script>

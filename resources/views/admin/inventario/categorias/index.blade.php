@@ -1,21 +1,21 @@
 @extends('layouts.app')
 
-@section('title', 'Proveedores')
+@section('title', 'Categorías')
 
 @section('content_header')
     <div class="container-fluid">
-
         <div class="row mb-3 align-items-center">
             <div class="col-12">
-                <h1 class="m-0 text-dark font-weight-bold">Lista de proveedores</h1>
-                <p class="text-muted mb-0">Se muestra los proveedores registrados dentro del sistema.</p>
+                <h1 class="m-0 text-dark font-weight-bold">Lista de categorias</h1>
+                <p class="text-muted mb-0">Se muestra las categorías disponibles para organizar los productos del inventario
+                </p>
             </div>
         </div>
 
         <div class="row mb-3">
             <div class="col-12">
                 <button class="btn btn-primary px-4 shadow-sm" data-toggle="collapse" data-target="#formProveedor">
-                    <i class="fas fa-plus mr-2"></i> Registrar proveedor
+                    <i class="fas fa-plus mr-2"></i> Registrar categoría
                 </button>
             </div>
         </div>
@@ -24,17 +24,15 @@
         <div id="formProveedor" class="collapse {{ $errors->any() ? 'show' : '' }}">
             <div class="card card-outline card-primary shadow-sm">
                 <div class="card-header">
-                    <p class="text-dark mb-0">Ingrese los datos del proveedor</p>
+                    <p class="text-dark mb-0">Ingrese la información correspondiente</p>
                 </div>
                 <div class="card-body">
-                    @include('admin.proveedores.partials.form')
+                    @include('admin.inventario.categorias.partials.form')
                 </div>
             </div>
         </div>
-
     </div>
 @stop
-
 
 @section('content')
     <div class="container-fluid">
@@ -82,15 +80,12 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table id="tablaProveedores" class="table table-bordered table-striped table-hover w-100">
+                    <table id="tablaCategorias" class="table table-bordered table-striped table-hover w-100">
                         <thead>
                             <tr>
-                                <th>RUC</th>
-                                <th>Razón social</th>
-                                <th>Email</th>
-                                <th>Teléfono principal</th>
-                                <th>Teléfono secundario</th>
-                                <th>Direcciones</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Productos</th>
                                 <th>Fecha de registro</th>
                                 <th>Acciones</th>
                             </tr>
@@ -111,12 +106,11 @@
     </div>
 @stop
 
-
 @section('js')
     <script>
         $(function() {
 
-            let table = $('#tablaProveedores').DataTable({
+            let table = $('#tablaCategorias').DataTable({
                 processing: true,
                 serverSide: false,
                 autoWidth: false,
@@ -129,32 +123,21 @@
                     }
                 },
 
-
                 pageLength: 10,
 
-                ajax: "{{ route('proveedores.datatables') }}",
+                ajax: "{{ route('categorias.datatables') }}",
 
                 columns: [{
-                        data: 'ruc'
-                    },
-                    {
                         data: 'nombre'
                     },
                     {
-                        data: 'email'
+                        data: 'descripcion'
                     },
                     {
-                        data: 'telefono_principal'
-                    },
-                    {
-                        data: 'telefono_secundario'
-                    },
-                    {
-                        data: 'direcciones',
-                        orderable: false,
+                        data: 'productos_count',
+                        orderable: true,
                         searchable: false
                     },
-
                     {
                         data: 'created_at',
                         render: function(data) {
@@ -174,7 +157,6 @@
                             return `${d}-${m}-${y} ${h}:${min}${ampm}`;
                         }
                     },
-
                     {
                         data: 'acciones',
                         orderable: false,
@@ -198,69 +180,16 @@
 
             });
 
+            // Búsqueda personalizada
             $('#customSearch').on('input search', function() {
-                table.search(this.value).draw();
+                table.search($(this).val()).draw();
             });
 
+            // Cambiar cantidad de registros
             $('#customLength').on('change', function() {
-                table.page.len(this.value).draw();
+                table.page.len($(this).val()).draw();
             });
 
-        });
-    </script>
-    <script>
-        let indexDireccion = {{ count(old('direcciones', [0])) }};
-
-        document.getElementById('btnAddDireccion')?.addEventListener('click', function() {
-
-            const container = document.getElementById('direcciones-container');
-
-            const html = `
-        <div class="direccion-item border rounded p-2 mb-2 position-relative">
-            <button type="button"
-                class="btn btn-sm btn-danger position-absolute"
-                style="top:5px; right:5px"
-                onclick="this.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-
-            <p class="text-muted d-block mb-1">Dirección adicional</p>
-
-            <div class="form-row align-items-start">
-
-                <div class="form-group col-md-3">
-                    <input type="text"
-                        class="form-control"
-                        name="direcciones[${indexDireccion}][provincia]"
-                        placeholder="Provincia">
-                </div>
-
-                <div class="form-group col-md-3">
-                    <input type="text"
-                        class="form-control"
-                        name="direcciones[${indexDireccion}][ciudad]"
-                        placeholder="Ciudad">
-                </div>
-
-                <div class="form-group col-md-3">
-                    <input type="text"
-                        class="form-control"
-                        name="direcciones[${indexDireccion}][calle]"
-                        placeholder="Calle">
-                </div>
-
-                <div class="form-group col-md-3">
-                    <input type="text"
-                        class="form-control"
-                        name="direcciones[${indexDireccion}][referencia]"
-                        placeholder="Referencia">
-                </div>
-
-            </div>
-        </div>`;
-
-            container.insertAdjacentHTML('beforeend', html);
-            indexDireccion++;
         });
     </script>
 @stop
