@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ProveedorController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,8 +19,8 @@ Route::middleware([
     Route::get('/admin/ventas', fn() => view('admin.ventas.index'));
     Route::get('/admin/analisis', fn() => view('admin.analisis.index'));
     Route::get('/admin/compras', fn() => view('admin.compras.index'));
-    Route::get('/admin/productos', fn() => view('admin.inventario.productos.index'));
-    Route::get('/admin/categorias', fn() => view('admin.inventario.categorias'));
+    Route::get('/admin/productos', [ProductoController::class, 'index'])->name('admin.productos');
+    Route::get('/admin/categorias', fn() => view('admin.inventario.categorias.index'))->name('admin.categorias');
     Route::get('/admin/proveedores', fn() => view('admin.proveedores.index'));
     Route::get('/admin/usuarios', fn() => view('admin.usuarios.index'));
     Route::get('/admin/roles', fn() => view('admin.roles.index'));
@@ -30,4 +32,13 @@ Route::middleware([
 
     // Inventario
     Route::post('/proveedores', [ProveedorController::class, 'store'])->name('proveedores.store');
+    Route::get('/proveedores/datatables', [ProveedorController::class, 'datatables'])->name('proveedores.datatables');
+    Route::get('/categorias/datatables', [CategoriaController::class, 'datatables'])->name('categorias.datatables');
+    Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
+    Route::get('/productos/datatables', [ProductoController::class, 'datatables'])->name('productos.datatables');
+    Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
+    Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
+    Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
+    Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
 });
+
