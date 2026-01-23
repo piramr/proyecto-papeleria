@@ -18,7 +18,8 @@ class UpdateProductoRequest extends FormRequest {
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array {
-        $productoId = $this->route('producto');
+        $productoParam = $this->route('producto');
+        $productoId = is_object($productoParam) ? $productoParam->id : $productoParam;
         
         return [
             'codigo_barras' => 'nullable|string|max:100|unique:productos,codigo_barras,' . $productoId,
