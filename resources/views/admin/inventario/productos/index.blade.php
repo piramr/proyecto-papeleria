@@ -1,4 +1,4 @@
-@extends('adminlte::page')
+@extends('layouts.app')
 
 @section('title', 'Productos')
 
@@ -13,18 +13,15 @@
 
         <div class="row mb-3">
             <div class="col-12">
-                <button type="button" class="btn btn-primary px-4 shadow-sm" data-toggle="collapse" data-target="#formProducto">
+                <button type="button" class="btn btn-primary px-4 shadow-sm" data-toggle="collapse"
+                    data-target="#formProducto">
                     <i class="fas fa-plus mr-2"></i> Agregar producto
                 </button>
             </div>
         </div>
-
         {{-- FORMULARIO --}}
         <div id="formProducto" class="collapse {{ $errors->any() ? 'show' : '' }}">
-            <div class="card card-outline card-primary shadow-sm">
-                <div class="card-header">
-                    <p class="text-dark mb-0">Ingrese los datos del producto</p>
-                </div>
+            <div class="card card-outline shadow-sm">
                 <div class="card-body">
                     @include('admin.inventario.productos.partials.form')
                 </div>
@@ -39,44 +36,73 @@
             <div class="card-body">
 
                 {{-- CONTROLES SUPERIORES --}}
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-sm-3">
 
-                    <div class="d-flex flex-column flex-sm-row align-items-center mb-3 mb-md-0">
+                    <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start mb-0 mb-md-0">
                         {{-- BUSCADOR --}}
-                        <div class="form-group mb-2 mb-sm-0 mr-sm-3 d-flex align-items-center">
+                        <div class="form-group mb-3 mb-sm-0 mr-sm-3 d-flex align-items-center">
                             <label class="mb-0 mr-2 font-weight-normal">Buscar:</label>
-                            <input type="search" id="customSearch" class="form-control"
-                                placeholder="Nombre del producto...">
+                            <input type="search" id="customSearch" class="form-control" placeholder="Filtro...">
+                            <span class="glyphicon glyphicon-search form-control-feedback"></span>
                         </div>
 
                         {{-- FILTRO CATEGORÍA --}}
-                        <div class="dropdown">
+                        <div class="dropdown mb-3 mb-sm-0 mr-sm-3">
                             <button id="btnCategoria" class="btn btn-default dropdown-toggle" type="button"
                                 data-toggle="dropdown">
-                                <i class="fas fa-filter mr-1 text-muted"></i> Todas las categorías
+                                <i class="fas fa-filter mr-1 text-muted"></i> Categoría
+                            </button>
+                            <div class="dropdown-menu shadow border-0" style="max-height: 300px; overflow-y: auto;">
+                                <a class="dropdown-item categoria-item" data-id="">Todas</a>
+                                @foreach ($categorias as $categoria)
+                                    <a class="dropdown-item categoria-item"
+                                        data-id="{{ $categoria->id }}">{{ $categoria->nombre }}</a>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        {{-- FILTRO PROVEEDORES --}}
+                        <div class="dropdown mb-3 mb-sm-0 mr-sm-3">
+                            <button id="btnProveedores" class="btn btn-default dropdown-toggle" type="button"
+                                data-toggle="dropdown">
+                                <i class="fas fa-filter mr-1 text-muted"></i> Proveedor
+                            </button>
+                            <div class="dropdown-menu shadow border-0" style="max-height: 300px; overflow-y: auto;">
+                                <a class="dropdown-item proveedor-item" data-ruc="">Todos</a>
+                                @foreach ($proveedores as $proveedor)
+                                    <a class="dropdown-item proveedor-item"
+                                        data-ruc="{{ $proveedor->ruc }}">{{ $proveedor->nombre }}</a>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="dropdown mb-3 mb-sm-0 mr-sm-3">
+                            <button id="btnProveedores" class="btn btn-default dropdown-toggle" type="button"
+                                data-toggle="dropdown">
+                                <i class="fas fa-download"></i> Exportar
                             </button>
                             <div class="dropdown-menu shadow border-0">
-                                <a class="dropdown-item categoria-item" data-id="">Todas</a>
-                                @foreach($categorias as $categoria)
-                                    <a class="dropdown-item categoria-item" data-id="{{ $categoria->id }}">{{ $categoria->nombre }}</a>
-                                @endforeach
+                                <a href="" class="dropdown-item" data-export='excel'>
+                                    <i class="fas fa-file-excel text-success"></i> Excel
+                                </a>
+                                <a href="" class="dropdown-item" data-export='excel'>
+                                    <i class="fas fa-file-pdf text-danger"></i> PDF
+                                </a>
                             </div>
                         </div>
                     </div>
 
-                    {{-- REGISTROS POR PÁGINA --}}
-                    <div class="d-flex align-items-center">
-                        <span class="text-muted">Mostrar</span>
-                        <select id="customLength" class="form-control mx-2 w-auto">
-                            <option value="10">10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                        </select>
-                        <span class="text-muted">registros</span>
-                    </div>
-
                 </div>
 
+                <div class="d-flex align-items-center justify-content-center justify-content-sm-start">
+                    <span class="text-muted">Mostrar</span>
+                    <select id="customLength" class="form-control mx-2 h-auto w-auto">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    <span class="text-muted">registros</span>
+                </div>
                 {{-- INFO + PAGINACIÓN (ARRIBA) --}}
                 <div class="d-flex justify-content-between mb-2">
                     <div id="dt-info-top"></div>
@@ -114,7 +140,8 @@
 @stop
 
 <!-- MODAL PARA EDITAR PRODUCTO -->
-<div class="modal fade" id="modalEditarProducto" tabindex="-1" role="dialog" aria-labelledby="modalEditarProductoLabel" aria-hidden="true">
+<div class="modal fade" id="modalEditarProducto" tabindex="-1" role="dialog"
+    aria-labelledby="modalEditarProductoLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary">
@@ -135,6 +162,7 @@
         $(function() {
 
             let categoryId = '';
+            let providerRuc = '';
 
             const table = $('#tablaProductos').DataTable({
                 processing: true,
@@ -155,6 +183,7 @@
                     url: '{{ route('productos.datatables') }}',
                     data: function(d) {
                         d.categoryid = categoryId;
+                        d.provider_ruc = providerRuc;
                     }
                 },
 
@@ -220,7 +249,7 @@
 
                     $('#dt-paging-top').html($('.dataTables_paginate'));
                     $('#dt-paging-bottom').html($('.dataTables_paginate'));
-                    
+
                     // Inicializar tooltips
                     $('[data-toggle="tooltip"]').tooltip();
                 }
@@ -240,10 +269,17 @@
                 table.ajax.reload();
             });
 
+            $('.proveedor-item').on('click', function() {
+                providerRuc = $(this).data('ruc');
+                $('#btnProveedores').html('<i class="fas fa-filter mr-1 text-muted"></i> ' + $(this)
+                    .text());
+                table.ajax.reload();
+            });
+
             // Editar producto
             $(document).on('click', '.btnEditProducto', function() {
                 const productoId = $(this).data('id');
-                
+
                 $.ajax({
                     url: '/productos/' + productoId + '/edit',
                     type: 'GET',
@@ -251,7 +287,7 @@
                     success: function(data) {
                         $('#contenidoModal').html(data.html);
                         $('#modalEditarProducto').modal('show');
-                        
+
                         // Re-inicializar scripts del formulario
                         setTimeout(() => {
                             inicializarProveedores();
@@ -269,7 +305,8 @@
                 const productoId = $(this).data('id');
                 const productoNombre = $(this).data('nombre');
 
-                if (confirm('¿Estás seguro de que deseas eliminar el producto "' + productoNombre + '"? Esta acción no se puede deshacer.')) {
+                if (confirm('¿Estás seguro de que deseas eliminar el producto "' + productoNombre +
+                        '"? Esta acción no se puede deshacer.')) {
                     $.ajax({
                         url: '/productos/' + productoId,
                         type: 'DELETE',

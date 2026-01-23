@@ -125,6 +125,12 @@ class ProductoController extends Controller
             $query->where('categoria_id', $request->categoryid);
         }
 
+        if ($request->provider_ruc) {
+            $query->whereHas('proveedores', function ($q) use ($request) {
+                $q->where('proveedores.ruc', $request->provider_ruc);
+            });
+        }
+
         return DataTables::eloquent($query)
             ->addColumn('categoria', function ($producto) {
                 return $producto->categoria->nombre ?? '-';

@@ -21,7 +21,7 @@ class StoreProductoRequest extends FormRequest {
         return [
             'codigo_barras' => 'required|string|max:100|unique:productos,codigo_barras',
             'nombre' => 'required|string|min:3|max:255',
-            'caracteristicas' => 'required|string|min:5|max:500',
+            'caracteristicas' => 'nullable|string|min:5|max:500',
             'cantidad_stock' => 'required|integer|min:0',
             'stock_minimo' => 'required|integer|min:0',
             'tiene_iva' => 'required|boolean',
