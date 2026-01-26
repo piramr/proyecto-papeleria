@@ -106,9 +106,87 @@
     </div>
 @stop
 
+<!-- MODAL PARA EDITAR CATEGORÍA -->
+<div class="modal fade" id="modalEditarCategoria" tabindex="-1" role="dialog"
+    aria-labelledby="modalEditarCategoriaLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary">
+                <h5 class="modal-title" id="modalEditarCategoriaLabel">Editar Categoría</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="contenidoModal">
+                <!-- Se carga dinámicamente -->
+            </div>
+        </div>
+    </div>
+</div>
+
 @section('js')
     <script>
         $(function() {
+
+            // Helper: attach AJAX submit to edit form inside modal
+            function attachEditFormAjax() {
+                const $form = $('#contenidoModal').find('form[action*="categorias"]');
+                if ($form.length === 0) return;
+
+                // Avoid double-binding
+                if ($form.data('ajax-bound')) return;
+                $form.data('ajax-bound', true);
+
+                $form.on('submit', function(e) {
+                    const method = $form.find('input[name="_method"]').val();
+                    if (method && method.toUpperCase() === 'PUT') {
+                        e.preventDefault();
+
+                        // Clear previous errors
+                        $form.find('.is-invalid').removeClass('is-invalid');
+                        $form.find('.invalid-feedback.dynamic-error').remove();
+
+                        const formData = new FormData(this);
+                        const actionUrl = $form.attr('action');
+
+                        $.ajax({
+                            url: actionUrl,
+                            type: 'PUT',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                                'Accept': 'application/json'
+                            },
+                            success: function(resp) {
+                                $('#modalEditarCategoria').modal('hide');
+                                window.categoriasTable.ajax.reload();
+                                alert((resp && resp.message) ? resp.message : 'Categoría actualizada correctamente');
+                            },
+                            error: function(xhr) {
+                                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                                    const errors = xhr.responseJSON.errors;
+
+                                    Object.keys(errors).forEach(function(field) {
+                                        const message = errors[field][0];
+                                        const $input = $form.find('[name="' + field + '"]');
+
+                                        if ($input.length) {
+                                            $input.addClass('is-invalid');
+                                            $('<span class="invalid-feedback dynamic-error"></span>').text(message).insertAfter($input);
+                                        } else {
+                                            $('<div class="alert alert-danger dynamic-error mb-2"></div>').text(message).prependTo('#contenidoModal');
+                                        }
+                                    });
+                                } else {
+                                    alert('Error al actualizar la categoría');
+                                }
+                            }
+                        });
+                    }
+                });
+            }
 
             let table = $('#tablaCategorias').DataTable({
                 processing: true,
@@ -189,6 +267,28 @@
             $('#customLength').on('change', function() {
                 table.page.len($(this).val()).draw();
             });
+
+            // Editar categoría
+            $(document).on('click', '.btnEditCategoria', function() {
+                const categoriaId = $(this).data('id');
+
+                $.ajax({
+                    url: '/categorias/' + categoriaId + '/edit',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        $('#contenidoModal').html(data.html);
+                        $('#modalEditarCategoria').modal('show');
+
+                        setTimeout(() => {
+                            attachEditFormAjax();
+                        }, 100);
+                    }
+                });
+            });
+
+            // Exponer tabla globalmente para refresh después de actualizar
+            window.categoriasTable = table;
 
         });
     </script>

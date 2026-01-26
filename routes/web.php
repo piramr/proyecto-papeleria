@@ -32,9 +32,17 @@ Route::middleware([
 
     // Inventario
     Route::post('/proveedores', [ProveedorController::class, 'store'])->name('proveedores.store');
+    Route::get('/proveedores/{proveedor}/edit', [ProveedorController::class, 'edit'])->name('proveedores.edit');
+    Route::put('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('proveedores.update');
+    Route::delete('/proveedores/{proveedor}', [ProveedorController::class, 'destroy'])->name('proveedores.destroy');
     Route::get('/proveedores/datatables', [ProveedorController::class, 'datatables'])->name('proveedores.datatables');
-    Route::get('/categorias/datatables', [CategoriaController::class, 'datatables'])->name('categorias.datatables');
+    
     Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
+    Route::get('/categorias/{categoria}/edit', [CategoriaController::class, 'edit'])->name('categorias.edit');
+    Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
+    Route::delete('/categorias/{categoria}', [CategoriaController::class, 'destroy'])->name('categorias.destroy');
+    Route::get('/categorias/datatables', [CategoriaController::class, 'datatables'])->name('categorias.datatables');
+    
     Route::get('/productos/datatables', [ProductoController::class, 'datatables'])->name('productos.datatables');
     Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
     Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');

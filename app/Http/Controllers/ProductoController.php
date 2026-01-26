@@ -171,7 +171,8 @@ class ProductoController extends Controller
             ->addColumn('acciones', function ($producto) {
                 return '
                 <div class="d-flex justify-content-center">
-                    <button class="btn btn-sm btn-info mr-1 btnEditProducto" data-id="' . $producto->id . '"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-success mr-1 btnShowProducto" data-id="' . $producto->id . '"><i class="fas fa-eye"></i></button>
+                    <button class="btn btn-sm btn-warning mr-1 btnEditProducto" data-id="' . $producto->id . '"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-sm btn-danger btnDeleteProducto" data-id="' . $producto->id . '" data-nombre="' . htmlspecialchars($producto->nombre) . '"><i class="fas fa-trash"></i></button>
                 </div>
             ';

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProveedorRequest;
+use App\Http\Requests\UpdateProveedorRequest;
 use App\Models\Proveedor;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -59,21 +60,58 @@ class ProveedorController extends Controller {
      * Show the form for editing the specified resource.
      */
     public function edit(Proveedor $proveedor) {
-        //
+        $proveedor->load('direcciones');
+        
+        $html = view('admin.proveedores.partials.form-edit', [
+            'proveedor' => $proveedor,
+        ])->render();
+
+        return response()->json(['html' => $html]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Proveedor $proveedor) {
-        //
+    public function update(UpdateProveedorRequest $request, Proveedor $proveedor) {
+        $data = $request->validated();
+
+        $proveedor->update([
+            'ruc' => $data['ruc'],
+            'nombre' => $data['nombre'],
+            'telefono_principal' => $data['telefono_principal'],
+            'telefono_secundario' => $data['telefono_secundario'] ?? null,
+            'email' => $data['email'],
+        ]);
+
+        if (isset($data['direcciones'])) {
+            $proveedor->direcciones()->delete();
+            foreach ($data['direcciones'] as $dir) {
+                $proveedor->direcciones()->create($dir);
+            }
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'message' => 'Proveedor actualizado correctamente',
+                'proveedor' => $proveedor->load('direcciones')
+            ]);
+        }
+
+        return redirect()->route('admin.proveedores.index')->with('success', 'Proveedor actualizado correctamente');
     }
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(Proveedor $proveedor) {
-        //
+        $proveedor->direcciones()->delete();
+        $proveedor->delete();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['message' => 'Proveedor eliminado correctamente']);
+        }
+
+        return redirect()->route('admin.proveedores.index')->with('success', 'Proveedor eliminado correctamente');
     }
 
     public function datatables() {
@@ -102,11 +140,10 @@ class ProveedorController extends Controller {
 
                 return $html;
             })
-            ->addColumn('acciones', function () {
+            ->addColumn('acciones', function ($proveedor) {
                 return '
                 <div class="d-flex justify-content-center">
-                    <button class="btn btn-sm btn-info mr-1"><i class="fas fa-eye"></i></button>
-                    <button class="btn btn-sm btn-warning mr-1"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-warning mr-1 btnEditProveedor" data-id="' . $proveedor->ruc . '"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
                 </div>
             ';

@@ -83,10 +83,10 @@
                             </button>
                             <div class="dropdown-menu shadow border-0">
                                 <a href="" class="dropdown-item" data-export='excel'>
-                                    <i class="fas fa-file-excel text-success"></i> Excel
+                                    <i class="fas fa-file-excel text-success mr-1"></i> Excel
                                 </a>
                                 <a href="" class="dropdown-item" data-export='excel'>
-                                    <i class="fas fa-file-pdf text-danger"></i> PDF
+                                    <i class="fas fa-file-pdf text-danger mr-1"></i> PDF
                                 </a>
                             </div>
                         </div>
@@ -187,7 +187,7 @@
 
                         $.ajax({
                             url: actionUrl,
-                            type: 'POST',
+                            type: 'PUT',
                             data: formData,
                             processData: false,
                             contentType: false,
