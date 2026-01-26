@@ -12,6 +12,7 @@ class Producto extends Model {
         'caracteristicas',
         'cantidad_stock',
         'stock_minimo',
+        'stock_maximo',
         'tiene_iva',
         'ubicacion',
         'precio_unitario',

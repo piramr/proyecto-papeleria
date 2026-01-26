@@ -50,7 +50,7 @@
                             <input type="search" id="customSearch" class="form-control" placeholder="Filtro...">
                         </div>
 
-                        {{-- EXPORTACIONES --}}
+                        {{-- EXPORTACIONES
                         <div class="form-group mb-2 mb-sm-0 mr-sm-3">
                             <button class="btn btn-default mr-2">
                                 <i class="fas fa-file-excel text-success"></i> Excel
@@ -58,7 +58,7 @@
                             <button class="btn btn-default">
                                 <i class="fas fa-file-pdf text-danger"></i> PDF
                             </button>
-                        </div>
+                        </div> --}}
                     </div>
 
                     {{-- REGISTROS POR PÁGINA --}}

@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateProductoRequest extends FormRequest {
     /**
@@ -18,23 +19,28 @@ class UpdateProductoRequest extends FormRequest {
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array {
-        $productoParam = $this->route('producto');
-        $productoId = is_object($productoParam) ? $productoParam->id : $productoParam;
-        
+        $productoId = $this->route('producto');
+
         return [
-            'codigo_barras' => 'nullable|string|max:100|unique:productos,codigo_barras,' . $productoId,
-            'nombre' => 'nullable|string|min:3|max:255',
+            'codigo_barras' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('productos', 'codigo_barras')->ignore($productoId),
+            ],
+            'nombre' => 'required|string|min:3|max:255',
             'caracteristicas' => 'nullable|string|min:5|max:500',
-            'cantidad_stock' => 'nullable|integer|min:0',
-            'stock_minimo' => 'nullable|integer|min:0',
-            'tiene_iva' => 'nullable|boolean',
+            'cantidad_stock' => 'required|integer|min:0',
+            'stock_minimo' => 'required|integer|min:0',
+            'stock_maximo' => 'required|integer|min:0',
+            'tiene_iva' => 'required|boolean',
             'ubicacion' => 'nullable|string|min:3|max:100',
-            'precio_unitario' => 'nullable|numeric|min:0.01',
-            'marca' => 'nullable|string|max:100',
+            'precio_unitario' => 'required|numeric|min:0.01',
+            'marca' => 'required|string|max:100',
             'en_oferta' => 'nullable|boolean',
             'precio_oferta' => 'required_if:en_oferta,1|numeric|min:0.01|lt:precio_unitario',
-            'categoria_id' => 'nullable|integer|exists:categorias,id',
-            'proveedor_ruc' => 'nullable|array',
+            'categoria_id' => 'required|integer|exists:categorias,id',
+            'proveedor_ruc' => 'required|array',
             'proveedor_ruc.*' => 'string|max:13|exists:proveedores,ruc'
         ];
     }
@@ -55,6 +61,9 @@ class UpdateProductoRequest extends FormRequest {
 
             'stock_minimo.integer' => 'El stock mínimo debe ser un número entero',
             'stock_minimo.min' => 'El stock mínimo no puede ser negativo',
+            
+            'stock_minimo.integer' => 'El stock máximo debe ser un número entero',
+            'stock_maximo.min' => 'El stock máximo no puede ser negativo',
 
             'ubicacion.min' => 'La ubicación debe tener al menos 3 caracteres',
             'ubicacion.max' => 'La ubicación no puede exceder 100 caracteres',

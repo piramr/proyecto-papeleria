@@ -76,7 +76,6 @@ class CategoriaController extends Controller {
             ->addColumn('acciones', function () {
                 return '
                 <div class="d-flex justify-content-center">
-                    <button class="btn btn-sm btn-info mr-1"><i class="fas fa-eye"></i></button>
                     <button class="btn btn-sm btn-warning mr-1"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
                 </div>

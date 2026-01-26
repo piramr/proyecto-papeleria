@@ -94,6 +94,13 @@ class ProductoController extends Controller
         // Actualizar la relación con los proveedores
         $producto->proveedores()->sync($proveedoresRuc);
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'message' => 'Producto actualizado correctamente',
+                'producto' => $producto->load(['categoria','proveedores'])
+            ]);
+        }
+
         return redirect()->route('admin.productos')->with('success', 'Producto actualizado correctamente');
     }
 
@@ -104,6 +111,10 @@ class ProductoController extends Controller
     {
         $producto->proveedores()->detach();
         $producto->delete();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['message' => 'Producto eliminado correctamente']);
+        }
 
         return redirect()->route('admin.productos')->with('success', 'Producto eliminado correctamente');
     }
