@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCategoriaRequest;
+use App\Http\Requests\UpdateCategoriaRequest;
 use App\Models\Categoria;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
@@ -44,21 +45,42 @@ class CategoriaController extends Controller {
      * Show the form for editing the specified resource.
      */
     public function edit(Categoria $categoria) {
-        //
+        $html = view('admin.inventario.categorias.partials.form', [
+            'categoria' => $categoria,
+            'isModal' => true,
+        ])->render();
+
+        return response()->json(['html' => $html]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Categoria $categoria) {
-        //
+    public function update(UpdateCategoriaRequest $request, Categoria $categoria) {
+        $validated = $request->validated();
+        $categoria->update($validated);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'message' => 'Categoría actualizada correctamente',
+                'categoria' => $categoria
+            ]);
+        }
+
+        return redirect()->route('admin.categorias')->with('success', 'Categoría actualizada correctamente');
     }
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(Categoria $categoria) {
-        //
+        $categoria->delete();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['message' => 'Categoría eliminada correctamente']);
+        }
+
+        return redirect()->route('admin.categorias')->with('success', 'Categoría eliminada correctamente');
     }
 
     public function datatables() {
@@ -73,11 +95,11 @@ class CategoriaController extends Controller {
             ->addColumn('productos_count', function ($categoria) {
                 return $categoria->productos_count;
             })
-            ->addColumn('acciones', function () {
+            ->addColumn('acciones', function ($categoria) {
                 return '
                 <div class="d-flex justify-content-center">
-                    <button class="btn btn-sm btn-warning mr-1"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-sm btn-warning mr-1 btnEditCategoria" data-id="' . $categoria->id . '"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger btnDeleteCategoria" data-id="' . $categoria->id . '"><i class="fas fa-trash"></i></button>
                 </div>
             ';
             })
