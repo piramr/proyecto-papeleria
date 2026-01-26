@@ -24,7 +24,8 @@ class StoreProductoRequest extends FormRequest {
             'caracteristicas' => 'nullable|string|min:5|max:500',
             'cantidad_stock' => 'required|integer|min:0',
             'stock_minimo' => 'required|integer|min:0',
-            'tiene_iva' => 'required|boolean',
+            'stock_maximo' => 'required|integer|min:0',
+            'tiene_iva' => 'nullable|boolean',
             'ubicacion' => 'required|string|min:3|max:100',
             'precio_unitario' => 'required|numeric|min:0.01',
             'marca' => 'required|string|max:100',
@@ -52,6 +53,7 @@ class StoreProductoRequest extends FormRequest {
 
             'stock_minimo.integer' => 'El stock mínimo debe ser un número entero',
             'stock_minimo.min' => 'El stock mínimo no puede ser negativo',
+            'stock_maximo.min' => 'El stock máximo no puede ser negativo',
 
             'ubicacion.min' => 'La ubicación debe tener al menos 3 caracteres',
             'ubicacion.max' => 'La ubicación no puede exceder 100 caracteres',

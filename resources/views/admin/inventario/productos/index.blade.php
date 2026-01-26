@@ -164,6 +164,90 @@
             let categoryId = '';
             let providerRuc = '';
 
+            // Helper: attach AJAX submit to edit form inside modal
+            function attachEditFormAjax() {
+                const $form = $('#contenidoModal').find('form[action*="productos"]');
+                if ($form.length === 0) return;
+
+                // Avoid double-binding
+                if ($form.data('ajax-bound')) return;
+                $form.data('ajax-bound', true);
+
+                $form.on('submit', function(e) {
+                    const method = $form.find('input[name="_method"]').val();
+                    if (method && method.toUpperCase() === 'PUT') {
+                        e.preventDefault();
+
+                        // Clear previous errors
+                        $form.find('.is-invalid').removeClass('is-invalid');
+                        $form.find('.invalid-feedback.dynamic-error, .text-danger.dynamic-error').remove();
+
+                        const formData = new FormData(this);
+                        const actionUrl = $form.attr('action');
+
+                        $.ajax({
+                            url: actionUrl,
+                            type: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            headers: {
+                                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                                'Accept': 'application/json'
+                            },
+                            success: function(resp) {
+                                $('#modalEditarProducto').modal('hide');
+                                table.ajax.reload();
+                                alert((resp && resp.message) ? resp.message : 'Producto actualizado correctamente');
+                            },
+                            error: function(xhr) {
+                                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
+                                    const errors = xhr.responseJSON.errors;
+
+                                    Object.keys(errors).forEach(function(field) {
+                                        const baseField = field.replace(/\..*$/, '');
+                                        const message = errors[field][0];
+                                        let $input = $form.find('[name="' + field + '"]');
+                                        
+                                        if ($input.length === 0) {
+                                            $input = $form.find('[name="' + baseField + '"]');
+                                        }
+                                        if ($input.length === 0 && baseField.includes('_')) {
+                                            $input = $form.find('[name="' + baseField + '[]"]');
+                                        }
+
+                                        if ($input.length) {
+                                            $input.addClass('is-invalid');
+                                            
+                                            // Determinar tipo de elemento de error según el campo (igual que Blade)
+                                            if (baseField === 'precio_unitario' || baseField === 'precio_oferta') {
+                                                // Para precios: <small class="text-danger"> después del input-group o input
+                                                const $target = $input.closest('.input-group').length ? $input.closest('.input-group') : $input;
+                                                $('<small class="text-danger dynamic-error d-block"></small>').text(message).insertAfter($target);
+                                            } else if (baseField === 'proveedor_ruc') {
+                                                // Para proveedores: <span class="text-danger small font-italic"> después de la tabla
+                                                const $table = $form.find('#tablaProveedores');
+                                                if ($table.length) {
+                                                    $('<span class="text-danger small font-italic dynamic-error d-block"></span>').text(message).insertAfter($table);
+                                                }
+                                            } else {
+                                                // Para campos normales: <span class="invalid-feedback"> después del input
+                                                $('<span class="invalid-feedback dynamic-error"></span>').text(message).insertAfter($input);
+                                            }
+                                        } else {
+                                            // Fallback general error at top of modal body
+                                            $('<div class="alert alert-danger dynamic-error mb-2"></div>').text(message).prependTo('#contenidoModal');
+                                        }
+                                    });
+                                } else {
+                                    alert('Error al actualizar el producto');
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+
             const table = $('#tablaProductos').DataTable({
                 processing: true,
                 serverSide: false,
@@ -292,6 +376,7 @@
                         setTimeout(() => {
                             inicializarProveedores();
                             togglePrecioOferta();
+                            attachEditFormAjax();
                         }, 100);
                     },
                     error: function() {

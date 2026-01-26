@@ -102,15 +102,17 @@
                     </div>
 
                     <div class="form-check mb-3">
+                        <input type="hidden" name="tiene_iva" value="0">
                         <input class="form-check-input" type="checkbox" id="tiene_iva" name="tiene_iva" value="1"
-                            {{ old('tiene_iva') || (isset($producto) && $producto->tiene_iva) ? 'checked' : '' }}>
+                            {{ old('tiene_iva', isset($producto) ? $producto->tiene_iva : false) ? 'checked' : '' }}>
                         <label class="form-check-label" for="tiene_iva">Aplica IVA</label>
                     </div>
                     <hr>
                     <div class="bg-light p-3 border rounded">
                         <div class="mb-2">
+                            <input type="hidden" name="en_oferta" value="0">
                             <input class="form-input" type="checkbox" id="en_oferta" name="en_oferta" value="1"
-                                {{ old('en_oferta') || (isset($producto) && $producto->en_oferta) ? 'checked' : '' }}
+                                {{ old('en_oferta', isset($producto) ? $producto->en_oferta : false) ? 'checked' : '' }}
                                 onchange="togglePrecioOferta()">
                             <label for="en_oferta" style="font-weight: normal">En oferta</label>
                         </div>
@@ -124,7 +126,7 @@
                                     class="form-control @error('precio_oferta') is-invalid @enderror"
                                     id="precio_oferta" name="precio_oferta"
                                     value="{{ old('precio_oferta', isset($producto) ? $producto->precio_oferta : '') }}"
-                                    {{ old('en_oferta') || (isset($producto) && $producto->en_oferta) ? '' : 'disabled' }}>
+                                    {{ old('en_oferta', isset($producto) ? $producto->en_oferta : false) ? '' : 'disabled' }}>
                             </div>
                             @error('precio_oferta')
                                 <small class="text-danger">{{ $message }}</small>
@@ -358,54 +360,8 @@
 
     // El botón cancelar ahora usa atributos de colapso HTML o data-dismiss según el contexto (modal vs página)
 
-    // Manejador para envío del formulario en modal
+    // Inicializar proveedores cuando se carga el formulario (tanto en página como en modal)
     document.addEventListener('DOMContentLoaded', function() {
-        inicializarProveedores();
-
-        // Si estamos en un modal, manejamos el envío con AJAX
-        const form = document.querySelector('form[action*="productos"]');
-        if (form && document.getElementById('modalEditarProducto')) {
-            form.addEventListener('submit', function(e) {
-                // Solo si es un UPDATE (contiene el método PUT)
-                const methodInput = form.querySelector('input[name="_method"]');
-                if (methodInput && methodInput.value === 'PUT') {
-                    e.preventDefault();
-
-                    const formData = new FormData(form);
-                    const url = form.action;
-
-                    $.ajax({
-                        url: url,
-                        type: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        success: function(response) {
-                            $('#modalEditarProducto').modal('hide');
-                            table.ajax.reload();
-                            // Mostrar alerta de éxito
-                            alert('Producto actualizado correctamente');
-                        },
-                        error: function(xhr) {
-                            if (xhr.status === 422) {
-                                const errors = xhr.responseJSON.errors;
-                                let errorMsg = 'Errores de validación:\n';
-                                for (let field in errors) {
-                                    errorMsg += errors[field][0] + '\n';
-                                }
-                                alert(errorMsg);
-                            } else {
-                                alert('Error al actualizar el producto');
-                            }
-                        }
-                    });
-                }
-            });
-        }
-    });
-
-    // Re-ejecutar al cargar en modal
-    window.addEventListener('contenidoModalActualizado', function() {
         inicializarProveedores();
     });
 </script>
