@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateProductoRequest;
 use App\Models\Categoria;
 use App\Models\Producto;
 use App\Models\Proveedor;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -36,13 +37,13 @@ class ProductoController extends Controller
     public function store(StoreProductoRequest $request)
     {
         $validated = $request->validated();
-        
+
         // Separar los RUCs de los proveedores antes de crear el producto
         $proveedoresRuc = $validated['proveedor_ruc'] ?? [];
         unset($validated['proveedor_ruc']);
 
         $producto = Producto::create($validated);
-        
+
         // Guardar la relación con los proveedores
         if (!empty($proveedoresRuc)) {
             $producto->proveedores()->attach($proveedoresRuc);
@@ -66,7 +67,7 @@ class ProductoController extends Controller
     {
         $categorias = Categoria::all();
         $proveedores = Proveedor::all();
-        
+
         // Render the form partial indicating it will be used inside a modal
         $html = view('admin.inventario.productos.partials.form', [
             'producto' => $producto,
@@ -84,13 +85,13 @@ class ProductoController extends Controller
     public function update(UpdateProductoRequest $request, Producto $producto)
     {
         $validated = $request->validated();
-        
+
         // Separar los RUCs de los proveedores antes de actualizar
         $proveedoresRuc = $validated['proveedor_ruc'] ?? [];
         unset($validated['proveedor_ruc']);
 
         $producto->update($validated);
-        
+
         // Actualizar la relación con los proveedores
         $producto->proveedores()->sync($proveedoresRuc);
 
@@ -151,21 +152,21 @@ class ProductoController extends Controller
             })
             ->addColumn('proveedores', function ($producto) {
                 $proveedores = $producto->proveedores;
-                
+
                 if ($proveedores->isEmpty()) {
                     return '<span class="text-muted">Sin proveedores</span>';
                 }
 
                 $nombres = $proveedores->pluck('nombre')->toArray();
                 $nombresCortado = implode(', ', array_slice($nombres, 0, 1));
-                
+
                 if (count($nombres) > 1) {
                     $nombresCortado .= ' ...';
                     $todosLosNombres = implode('<br>', $nombres);
-                    
+
                     return '<span class="d-inline-block" data-toggle="tooltip" data-html="true" title="' . htmlspecialchars($todosLosNombres) . '">' . htmlspecialchars($nombresCortado) . '</span>';
                 }
-                
+
                 return htmlspecialchars($nombresCortado);
             })
             ->addColumn('acciones', function ($producto) {
@@ -180,5 +181,191 @@ class ProductoController extends Controller
             ->rawColumns(['acciones', 'proveedores'])
             ->make(true);
     }
-}
 
+    public function exportPdf(Request $request) {
+        // Construir la consulta base con relaciones
+        $query = \App\Models\Producto::with(['categoria', 'proveedores']);
+
+        // Aplicar filtro de categoría si existe
+        if ($request->has('categoria_id') && $request->categoria_id != '') {
+            $query->where('categoria_id', $request->categoria_id);
+        }
+
+        // Aplicar filtro de proveedor si existe
+        if ($request->has('proveedor_ruc') && $request->proveedor_ruc != '') {
+            $query->whereHas('proveedores', function ($q) use ($request) {
+                $q->where('proveedores.ruc', $request->proveedor_ruc);
+            });
+        }
+
+        // Obtener productos filtrados
+        $productos = $query->get();
+
+        // Calcular total_vendidos para cada producto
+        foreach ($productos as $producto) {
+            $producto->total_vendidos = \App\Models\FacturaDetalle::where('producto_id', $producto->id)->sum('cantidad');
+        }
+
+        $pdf = Pdf::loadView('pdf.productos', [
+            'productos' => $productos
+        ]);
+        return $pdf->stream();
+    }
+
+    public function exportExcel(Request $request) {
+        // Construir la consulta base con relaciones
+        $query = \App\Models\Producto::with(['categoria', 'proveedores']);
+
+        // Aplicar filtro de categoría si existe
+        if ($request->has('categoria_id') && $request->categoria_id != '') {
+            $query->where('categoria_id', $request->categoria_id);
+        }
+
+        // Aplicar filtro de proveedor si existe
+        if ($request->has('proveedor_ruc') && $request->proveedor_ruc != '') {
+            $query->whereHas('proveedores', function ($q) use ($request) {
+                $q->where('proveedores.ruc', $request->proveedor_ruc);
+            });
+        }
+
+        // Obtener productos filtrados ordenados por código
+        $productos = $query->orderBy('codigo_barras')->get();
+
+        // Calcular total_vendidos para cada producto
+        foreach ($productos as $producto) {
+            $producto->total_vendidos = \App\Models\FacturaDetalle::where('producto_id', $producto->id)->sum('cantidad');
+        }
+
+        // Crear una nueva hoja de cálculo
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Productos');
+
+        // Definir estilos para el encabezado
+        $headerStyle = [
+            'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF'],
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '1F4E78'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => '000000'],
+                ],
+            ],
+        ];
+
+        // Definir estilos para las celdas de datos
+        $dataStyle = [
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'CCCCCC'],
+                ],
+            ],
+            'alignment' => [
+                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText' => true,
+            ],
+        ];
+
+        // Agregar encabezados
+        $headers = [
+            'Nro',
+            'Código',
+            'Nombre',
+            'Descripción',
+            'Categoría',
+            'Stock',
+            'Precio de Venta',
+            'Proveedor/es',
+            'Total Vendidos',
+            'Fecha de Registro'
+        ];
+        
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '1', $header);
+            $sheet->getStyle($col . '1')->applyFromArray($headerStyle);
+            $col++;
+        }
+
+        // Ajustar altura del encabezado
+        $sheet->getRowDimension(1)->setRowHeight(30);
+
+        // Agregar datos
+        $row = 2;
+        $nro = 1;
+        foreach ($productos as $producto) {
+            $sheet->setCellValue('A' . $row, $nro);
+            $sheet->setCellValue('B' . $row, $producto->codigo_barras);
+            $sheet->setCellValue('C' . $row, $producto->nombre);
+            $sheet->setCellValue('D' . $row, $producto->caracteristicas ?? '-');
+            $sheet->setCellValue('E' . $row, $producto->categoria->nombre ?? '-');
+            $sheet->setCellValue('F' . $row, $producto->cantidad_stock);
+            $sheet->setCellValue('G' . $row, $producto->precio_unitario);
+            
+            // Proveedores
+            if ($producto->proveedores->isEmpty()) {
+                $sheet->setCellValue('H' . $row, 'Sin proveedores');
+            } else {
+                $proveedoresNombres = $producto->proveedores->pluck('nombre')->toArray();
+                if (count($proveedoresNombres) > 1) {
+                    $proveedoresConVinetas = array_map(function($nombre) { return '• ' . $nombre; }, $proveedoresNombres);
+                    $sheet->setCellValue('H' . $row, implode("\n", $proveedoresConVinetas));
+                } else {
+                    $sheet->setCellValue('H' . $row, implode(', ', $proveedoresNombres));
+                }
+            }
+            
+            // Total vendidos
+            $sheet->setCellValue('I' . $row, $producto->total_vendidos);
+            
+            // Fecha de registro
+            $sheet->setCellValue('J' . $row, $producto->created_at->format('d-m-Y H:i'));
+
+            // Aplicar estilos a la fila de datos
+            foreach (range('A', 'J') as $col) {
+                $sheet->getStyle($col . $row)->applyFromArray($dataStyle);
+            }
+
+            // Alinear números a la derecha
+            $sheet->getStyle('A' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+            $sheet->getStyle('F' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle('G' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+            $sheet->getStyle('I' . $row)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+
+            $row++;
+            $nro++;
+        }
+
+        // Ajustar ancho de columnas automáticamente
+        foreach (range('A', 'J') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Crear el archivo Excel
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        
+        // Generar nombre del archivo
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        $filename = 'Productos_' . $timestamp . '.xlsx';
+
+        // Enviar el archivo como descarga
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename=' . $filename);
+        header('Cache-Control: max-age=0');
+
+        $writer->save('php://output');
+        exit;
+    }
+}

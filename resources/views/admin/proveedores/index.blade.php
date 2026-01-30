@@ -53,15 +53,15 @@
                         </div>
 
                         <div class="dropdown mb-3 mb-sm-0 mr-sm-3">
-                            <button id="btnProveedores" class="btn btn-default dropdown-toggle" type="button"
+                            <button id="btnExportarProveedores" class="btn btn-default dropdown-toggle" type="button"
                                 data-toggle="dropdown">
                                 <i class="fas fa-download"></i> Exportar
                             </button>
                             <div class="dropdown-menu shadow border-0">
-                                <a href="" class="dropdown-item" data-export='excel'>
+                                <a href="" id="exportProveedoresExcel" class="dropdown-item" data-export='excel'>
                                     <i class="fas fa-file-excel text-success mr-1"></i> Excel
                                 </a>
-                                <a href="" class="dropdown-item" data-export='excel'>
+                                <a href="" id="exportProveedoresPdf" class="dropdown-item" data-export='pdf'>
                                     <i class="fas fa-file-pdf text-danger mr-1"></i> PDF
                                 </a>
                             </div>
@@ -284,6 +284,18 @@
 
             $('#customLength').on('change', function() {
                 table.page.len(this.value).draw();
+            });
+
+            // Exportar PDF
+            $('#exportProveedoresPdf').on('click', function(e) {
+                e.preventDefault();
+                window.open('{{ route('proveedores.export-pdf') }}', '_blank');
+            });
+
+            // Exportar Excel
+            $('#exportProveedoresExcel').on('click', function(e) {
+                e.preventDefault();
+                window.location.href = '{{ route('proveedores.export-excel') }}';
             });
 
             // Editar proveedor

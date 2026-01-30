@@ -10,7 +10,7 @@
                 <div class="form-group col-md-6">
                     <label>Nombre de la categoría <span class="text-danger">*</span></label>
                     <input type="text" name="nombre" maxlength="100"
-                        class="form-control @error('nombre') is-invalid @enderror" 
+                        class="form-control @error('nombre') is-invalid @enderror"
                         value="{{ old('nombre', isset($categoria) ? $categoria->nombre : '') }}" placeholder="Ej. Electrónica">
                     @error('nombre')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -20,7 +20,7 @@
                 <div class="form-group col-md-6">
                     <label>Descripción</label>
                     <input type="text" name="descripcion" maxlength="255"
-                        class="form-control @error('descripcion') is-invalid @enderror" 
+                        class="form-control @error('descripcion') is-invalid @enderror"
                         value="{{ old('descripcion', isset($categoria) ? $categoria->descripcion : '') }}" placeholder="Breve descripción de la categoría">
                     @error('descripcion')
                         <div class="invalid-feedback">{{ $message }}</div>
