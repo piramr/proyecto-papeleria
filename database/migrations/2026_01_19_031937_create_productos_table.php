@@ -21,8 +21,8 @@ return new class extends Migration {
             $table->string('ubicacion')->nullable();
             $table->decimal('precio_unitario', 10, 2);
             $table->string('marca', 100);
-            $table->boolean('en_oferta');
-            $table->decimal('precio_oferta', 10, 2);
+            $table->boolean('en_oferta')->nullable();
+            $table->decimal('precio_oferta', 10, 2)->nullable();
             $table->foreignId('categoria_id')->constrained('categorias');
 
             $table->timestamps();

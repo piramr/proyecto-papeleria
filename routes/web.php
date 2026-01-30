@@ -21,7 +21,7 @@ Route::middleware([
     Route::get('/admin/compras', fn() => view('admin.compras.index'));
     Route::get('/admin/productos', [ProductoController::class, 'index'])->name('admin.productos');
     Route::get('/admin/categorias', fn() => view('admin.inventario.categorias.index'))->name('admin.categorias');
-    Route::get('/admin/proveedores', fn() => view('admin.proveedores.index'));
+    Route::get('/admin/proveedores', fn() => view('admin.proveedores.index'))->name('admin.proveedores.index');
     Route::get('/admin/usuarios', fn() => view('admin.usuarios.index'));
     Route::get('/admin/roles', fn() => view('admin.roles.index'));
     Route::get('/admin/clientes', fn() => view('admin.clientes.index'));
@@ -36,17 +36,23 @@ Route::middleware([
     Route::put('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('proveedores.update');
     Route::delete('/proveedores/{proveedor}', [ProveedorController::class, 'destroy'])->name('proveedores.destroy');
     Route::get('/proveedores/datatables', [ProveedorController::class, 'datatables'])->name('proveedores.datatables');
-    
+
     Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
     Route::get('/categorias/{categoria}/edit', [CategoriaController::class, 'edit'])->name('categorias.edit');
     Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
     Route::delete('/categorias/{categoria}', [CategoriaController::class, 'destroy'])->name('categorias.destroy');
     Route::get('/categorias/datatables', [CategoriaController::class, 'datatables'])->name('categorias.datatables');
-    
+
     Route::get('/productos/datatables', [ProductoController::class, 'datatables'])->name('productos.datatables');
+    Route::get('/productos/export-pdf', [ProductoController::class, 'exportPdf'])->name('productos.export-pdf');
+    Route::get('/productos/export-excel', [ProductoController::class, 'exportExcel'])->name('productos.export-excel');
     Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
     Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
     Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
-});
 
+    Route::get('/proveedores/export-pdf', [ProveedorController::class, 'exportPdf'])->name('proveedores.export-pdf');
+    Route::get('/proveedores/export-excel', [ProveedorController::class, 'exportExcel'])->name('proveedores.export-excel');
+
+    Route::get('/pdf', [ProductoController::class, 'exportPdf']);
+});

@@ -77,15 +77,15 @@
                         </div>
 
                         <div class="dropdown mb-3 mb-sm-0 mr-sm-3">
-                            <button id="btnProveedores" class="btn btn-default dropdown-toggle" type="button"
+                            <button id="btnExportar" class="btn btn-default dropdown-toggle" type="button"
                                 data-toggle="dropdown">
                                 <i class="fas fa-download"></i> Exportar
                             </button>
                             <div class="dropdown-menu shadow border-0">
-                                <a href="" class="dropdown-item" data-export='excel'>
+                                <a href="" id="exportExcel" class="dropdown-item" data-export='excel'>
                                     <i class="fas fa-file-excel text-success mr-1"></i> Excel
                                 </a>
-                                <a href="" class="dropdown-item" data-export='excel'>
+                                <a href="" id="exportPdf" class="dropdown-item" data-export='pdf'>
                                     <i class="fas fa-file-pdf text-danger mr-1"></i> PDF
                                 </a>
                             </div>
@@ -358,6 +358,54 @@
                 $('#btnProveedores').html('<i class="fas fa-filter mr-1 text-muted"></i> ' + $(this)
                     .text());
                 table.ajax.reload();
+            });
+
+            // Exportar PDF con filtros
+            $('#exportPdf').on('click', function(e) {
+                e.preventDefault();
+                
+                // Construir la URL con los parámetros de filtro
+                let url = '{{ route('productos.export-pdf') }}';
+                let params = [];
+                
+                if (categoryId !== '') {
+                    params.push('categoria_id=' + categoryId);
+                }
+                
+                if (providerRuc !== '') {
+                    params.push('proveedor_ruc=' + providerRuc);
+                }
+                
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+                
+                // Abrir en nueva pestaña
+                window.open(url, '_blank');
+            });
+
+            // Exportar Excel con filtros
+            $('#exportExcel').on('click', function(e) {
+                e.preventDefault();
+                
+                // Construir la URL con los parámetros de filtro
+                let url = '{{ route('productos.export-excel') }}';
+                let params = [];
+                
+                if (categoryId !== '') {
+                    params.push('categoria_id=' + categoryId);
+                }
+                
+                if (providerRuc !== '') {
+                    params.push('proveedor_ruc=' + providerRuc);
+                }
+                
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
+                }
+                
+                // Redirigir para descargar el archivo
+                window.location.href = url;
             });
 
             // Editar producto
