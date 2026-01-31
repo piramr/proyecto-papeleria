@@ -2,35 +2,20 @@
 
 namespace Database\Seeders;
 
+use App\Models\TipoPago;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
-class TipoPagoSeeder extends Seeder {
+class TipoPagoSeeder extends Seeder
+{
     /**
      * Run the database seeds.
      */
-    public function run(): void {
-        DB::table('tipo_pagos')->insert([
-            [
-                'descripcion' => 'Efectivo',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'descripcion' => 'Transferencia Bancaria',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'descripcion' => 'Cheque',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'descripcion' => 'Crédito',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
+    public function run(): void
+    {
+        TipoPago::create([
+            'nombre' => 'Efectivo',
+            'descripcion' => 'Pago en efectivo',
         ]);
     }
 }
