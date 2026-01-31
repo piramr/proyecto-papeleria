@@ -40,17 +40,30 @@
 
         @stack('modals')
 
+        <x-session-timeout />
         @livewireScripts
     </body>
 </html> --}}
 {{-- resources/views/layouts/app.blade.php --}}
 @extends('adminlte::page')
 
+@section('title', 'Perfil')
+
+@section('content_header')
+    @if (isset($header))
+        {{ $header }}
+    @endif
+@stop
+
+@section('content')
+    {{ $slot ?? '' }}
+@stop
+
 @section('css')
-    
+    @livewireStyles
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 @stop
 
 @section('js')
-    {{-- Aquí puedes poner el script de wire:navigate que querías --}}
-    
+    @livewireScripts
 @stop
