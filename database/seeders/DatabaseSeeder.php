@@ -15,6 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seeders para datos base
+        $this->call([
+            TipoPagoSeeder::class,
+        ]);
+
         // User::factory(10)->create();
 
         User::factory()->create([
