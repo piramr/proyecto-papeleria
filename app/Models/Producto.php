@@ -12,6 +12,7 @@ class Producto extends Model {
         'caracteristicas',
         'cantidad_stock',
         'stock_minimo',
+        'stock_maximo',
         'tiene_iva',
         'ubicacion',
         'precio_unitario',
@@ -23,5 +24,9 @@ class Producto extends Model {
 
     public function categoria() {
         return $this->belongsTo(Categoria::class);
+    }
+
+    public function proveedores() {
+        return $this->belongsToMany(Proveedor::class, 'producto_proveedores', 'producto_id', 'proveedor_ruc', 'id', 'ruc');
     }
 }

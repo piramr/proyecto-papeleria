@@ -22,9 +22,10 @@ return new class extends Migration {
             $table->string('descripcion')->nullable();
             $table->timestamp('fecha_hora');
             $table->decimal('total', 10, 2);
-            $table->string('proveedor_rud', 13);
+            $table->string('proveedor_ruc', 13);
             $table->foreignId('usuario_id')->constrained('users');
             $table->foreignId('estado_pedido_id')->constrained('estados_pedido');
+            $table->foreign('proveedor_ruc')->references('ruc')->on('proveedores');
 
             $table->timestamps();
         });
@@ -34,10 +35,7 @@ return new class extends Migration {
             $table->unsignedInteger('cantidad');
             $table->decimal('precio_compra', 10, 2);
             $table->decimal('total', 10, 2);
-            $table->string('proveedor_ruc', 13);
-            $table->foreign('proveedor_ruc')->references('ruc')->on('proveedores');
             $table->foreignId('producto_id')->constrained('productos');
-
             $table->timestamps();
         });
     }

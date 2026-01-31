@@ -1,21 +1,21 @@
 @extends('layouts.app')
 
-@section('title', 'Proveedores')
+@section('title', 'Categorías')
 
 @section('content_header')
     <div class="container-fluid">
-
         <div class="row mb-3 align-items-center">
             <div class="col-12">
-                <h1 class="m-0 text-dark font-weight-bold">Lista de proveedores</h1>
-                <p class="text-muted mb-0">Se muestra los proveedores registrados dentro del sistema.</p>
+                <h1 class="m-0 text-dark font-weight-bold">Lista de categorias</h1>
+                <p class="text-muted mb-0">Se muestra las categorías disponibles para organizar los productos del inventario
+                </p>
             </div>
         </div>
 
         <div class="row mb-3">
             <div class="col-12">
                 <button class="btn btn-primary px-4 shadow-sm" data-toggle="collapse" data-target="#formProveedor">
-                    <i class="fas fa-plus mr-2"></i> Registrar proveedor
+                    <i class="fas fa-plus mr-2"></i> Registrar categoría
                 </button>
             </div>
         </div>
@@ -24,17 +24,15 @@
         <div id="formProveedor" class="collapse {{ $errors->any() ? 'show' : '' }}">
             <div class="card card-outline card-primary shadow-sm">
                 <div class="card-header">
-                    <p class="text-dark mb-0">Ingrese los datos del proveedor</p>
+                    <p class="text-dark mb-0">Ingrese la información correspondiente</p>
                 </div>
                 <div class="card-body">
-                    @include('admin.proveedores.partials.form')
+                    @include('admin.inventario.categorias.partials.form')
                 </div>
             </div>
         </div>
-
     </div>
 @stop
-
 
 @section('content')
     <div class="container-fluid">
@@ -52,21 +50,15 @@
                             <input type="search" id="customSearch" class="form-control" placeholder="Filtro...">
                         </div>
 
-                        <div class="dropdown mb-3 mb-sm-0 mr-sm-3">
-                            <button id="btnExportarProveedores" class="btn btn-default dropdown-toggle" type="button"
-                                data-toggle="dropdown">
-                                <i class="fas fa-download"></i> Exportar
+                        {{-- EXPORTACIONES
+                        <div class="form-group mb-2 mb-sm-0 mr-sm-3">
+                            <button class="btn btn-default mr-2">
+                                <i class="fas fa-file-excel text-success"></i> Excel
                             </button>
-                            <div class="dropdown-menu shadow border-0">
-                                <a href="" id="exportProveedoresExcel" class="dropdown-item" data-export='excel'>
-                                    <i class="fas fa-file-excel text-success mr-1"></i> Excel
-                                </a>
-                                <a href="" id="exportProveedoresPdf" class="dropdown-item" data-export='pdf'>
-                                    <i class="fas fa-file-pdf text-danger mr-1"></i> PDF
-                                </a>
-                            </div>
-                        </div>
-                        
+                            <button class="btn btn-default">
+                                <i class="fas fa-file-pdf text-danger"></i> PDF
+                            </button>
+                        </div> --}}
                     </div>
 
                     {{-- REGISTROS POR PÁGINA --}}
@@ -88,15 +80,12 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table id="tablaProveedores" class="table table-bordered table-striped table-hover w-100">
+                    <table id="tablaCategorias" class="table table-bordered table-striped table-hover w-100">
                         <thead>
                             <tr>
-                                <th>RUC</th>
-                                <th>Razón social</th>
-                                <th>Email</th>
-                                <th>Teléfono principal</th>
-                                <th>Teléfono secundario</th>
-                                <th>Direcciones</th>
+                                <th>Nombre</th>
+                                <th>Descripción</th>
+                                <th>Productos</th>
                                 <th>Fecha de registro</th>
                                 <th>Acciones</th>
                             </tr>
@@ -117,13 +106,13 @@
     </div>
 @stop
 
-<!-- MODAL PARA EDITAR PROVEEDOR -->
-<div class="modal fade" id="modalEditarProveedor" tabindex="-1" role="dialog"
-    aria-labelledby="modalEditarProveedorLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+<!-- MODAL PARA EDITAR CATEGORÍA -->
+<div class="modal fade" id="modalEditarCategoria" tabindex="-1" role="dialog"
+    aria-labelledby="modalEditarCategoriaLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header bg-primary">
-                <h5 class="modal-title" id="modalEditarProveedorLabel">Editar Proveedor</h5>
+                <h5 class="modal-title" id="modalEditarCategoriaLabel">Editar Categoría</h5>
                 <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -141,7 +130,7 @@
 
             // Helper: attach AJAX submit to edit form inside modal
             function attachEditFormAjax() {
-                const $form = $('#contenidoModal').find('form[action*="proveedores"]');
+                const $form = $('#contenidoModal').find('form[action*="categorias"]');
                 if ($form.length === 0) return;
 
                 // Avoid double-binding
@@ -155,7 +144,7 @@
 
                         // Clear previous errors
                         $form.find('.is-invalid').removeClass('is-invalid');
-                        $form.find('.invalid-feedback.dynamic-error, .text-danger.dynamic-error').remove();
+                        $form.find('.invalid-feedback.dynamic-error').remove();
 
                         const formData = new FormData(this);
                         const actionUrl = $form.attr('action');
@@ -171,9 +160,9 @@
                                 'Accept': 'application/json'
                             },
                             success: function(resp) {
-                                $('#modalEditarProveedor').modal('hide');
-                                table.ajax.reload();
-                                alert((resp && resp.message) ? resp.message : 'Proveedor actualizado correctamente');
+                                $('#modalEditarCategoria').modal('hide');
+                                window.categoriasTable.ajax.reload();
+                                alert((resp && resp.message) ? resp.message : 'Categoría actualizada correctamente');
                             },
                             error: function(xhr) {
                                 if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
@@ -191,7 +180,7 @@
                                         }
                                     });
                                 } else {
-                                    alert('Error al actualizar el proveedor');
+                                    alert('Error al actualizar la categoría');
                                 }
                             }
                         });
@@ -199,7 +188,7 @@
                 });
             }
 
-            const table = $('#tablaProveedores').DataTable({
+            let table = $('#tablaCategorias').DataTable({
                 processing: true,
                 serverSide: false,
                 autoWidth: false,
@@ -214,26 +203,17 @@
 
                 pageLength: 10,
 
-                ajax: "{{ route('proveedores.datatables') }}",
+                ajax: "{{ route('categorias.datatables') }}",
 
                 columns: [{
-                        data: 'ruc'
-                    },
-                    {
                         data: 'nombre'
                     },
                     {
-                        data: 'email'
+                        data: 'descripcion'
                     },
                     {
-                        data: 'telefono_principal'
-                    },
-                    {
-                        data: 'telefono_secundario'
-                    },
-                    {
-                        data: 'direcciones',
-                        orderable: false,
+                        data: 'productos_count',
+                        orderable: true,
                         searchable: false
                     },
                     {
@@ -278,37 +258,27 @@
 
             });
 
+            // Búsqueda personalizada
             $('#customSearch').on('input search', function() {
-                table.search(this.value).draw();
+                table.search($(this).val()).draw();
             });
 
+            // Cambiar cantidad de registros
             $('#customLength').on('change', function() {
-                table.page.len(this.value).draw();
+                table.page.len($(this).val()).draw();
             });
 
-            // Exportar PDF
-            $('#exportProveedoresPdf').on('click', function(e) {
-                e.preventDefault();
-                window.open('{{ route('proveedores.export-pdf') }}', '_blank');
-            });
-
-            // Exportar Excel
-            $('#exportProveedoresExcel').on('click', function(e) {
-                e.preventDefault();
-                window.location.href = '{{ route('proveedores.export-excel') }}';
-            });
-
-            // Editar proveedor
-            $(document).on('click', '.btnEditProveedor', function() {
-                const proveedorId = $(this).data('id');
+            // Editar categoría
+            $(document).on('click', '.btnEditCategoria', function() {
+                const categoriaId = $(this).data('id');
 
                 $.ajax({
-                    url: '/proveedores/' + proveedorId + '/edit',
+                    url: '/categorias/' + categoriaId + '/edit',
                     type: 'GET',
                     dataType: 'json',
                     success: function(data) {
                         $('#contenidoModal').html(data.html);
-                        $('#modalEditarProveedor').modal('show');
+                        $('#modalEditarCategoria').modal('show');
 
                         setTimeout(() => {
                             attachEditFormAjax();
@@ -317,80 +287,9 @@
                 });
             });
 
-        });
-    </script>
-    <script>
-        let indexDireccion = {{ count(old('direcciones', [0])) }};
+            // Exponer tabla globalmente para refresh después de actualizar
+            window.categoriasTable = table;
 
-        // Event delegation para agregar direcciones en ambos contextos (create y edit)
-        $(document).on('click', '#btnAddDireccion', function(e) {
-            e.preventDefault();
-
-            // Buscar el contenedor de direcciones (puede estar en padre directo o más arriba)
-            let $container = $(this).siblings('#direcciones-container');
-            
-            if ($container.length === 0) {
-                $container = $(this).closest('.d-flex').nextAll('#direcciones-container').first();
-            }
-            
-            if ($container.length === 0) {
-                $container = $(this).closest('.col-md-12').siblings('#direcciones-container');
-            }
-            
-            if ($container.length === 0) {
-                console.error('No se encontró el contenedor de direcciones');
-                return;
-            }
-
-            // Calcular el índice basado en las direcciones existentes en este contenedor
-            const currentCount = $container.find('.direccion-item').length;
-            const newIndex = currentCount;
-
-            const html = `
-            <div class="direccion-item border rounded p-2 mb-2 position-relative">
-                <button type="button"
-                    class="btn btn-sm btn-danger position-absolute"
-                    style="top:5px; right:5px"
-                    onclick="this.parentElement.remove()">
-                    <i class="fas fa-times"></i>
-                </button>
-
-                <p class="text-muted d-block mb-1">Dirección adicional</p>
-
-                <div class="form-row align-items-start">
-
-                    <div class="form-group col-md-3">
-                        <input type="text"
-                            class="form-control"
-                            name="direcciones[${newIndex}][provincia]"
-                            placeholder="Provincia">
-                    </div>
-
-                    <div class="form-group col-md-3">
-                        <input type="text"
-                            class="form-control"
-                            name="direcciones[${newIndex}][ciudad]"
-                            placeholder="Ciudad">
-                    </div>
-
-                    <div class="form-group col-md-3">
-                        <input type="text"
-                            class="form-control"
-                            name="direcciones[${newIndex}][calle]"
-                            placeholder="Calle">
-                    </div>
-
-                    <div class="form-group col-md-3">
-                        <input type="text"
-                            class="form-control"
-                            name="direcciones[${newIndex}][referencia]"
-                            placeholder="Referencia">
-                    </div>
-
-                </div>
-            </div>`;
-
-            $container.append(html);
         });
     </script>
 @stop
