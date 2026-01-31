@@ -16,6 +16,13 @@
                 <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
             </div>
 
+            @if(isset($question) && $question)
+                <div class="mt-4">
+                    <x-label for="security_answer" value="{{ __('Pregunta de Seguridad: ') . $question }}" />
+                    <x-input id="security_answer" class="block mt-1 w-full" type="text" name="security_answer" required autocomplete="off" placeholder="Tu respuesta" />
+                </div>
+            @endif
+
             <div class="mt-4">
                 <x-label for="password" value="{{ __('Password') }}" />
                 <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />

@@ -12,36 +12,36 @@
             </div>
         @endsession
 
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" class="space-y-6">
             @csrf
 
             <div>
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
+                <x-label for="email" value="{{ __('Email') }}" class="text-base font-medium text-gray-700 dark:text-gray-300" />
+                <x-input id="email" class="block mt-2 w-full px-4 py-3 text-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="tu@email.com" />
             </div>
 
-            <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="current-password" />
+            <div>
+                <x-label for="password" value="{{ __('Password') }}" class="text-base font-medium text-gray-700 dark:text-gray-300" />
+                <x-input id="password" class="block mt-2 w-full px-4 py-3 text-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm" type="password" name="password" required autocomplete="current-password" placeholder="••••••••" />
             </div>
 
-            <div class="block mt-4">
-                <label for="remember_me" class="flex items-center">
-                    <x-checkbox id="remember_me" name="remember" />
-                    <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
+            <div class="flex items-center justify-between mt-6">
+                <label for="remember_me" class="flex items-center cursor-pointer">
+                    <x-checkbox id="remember_me" name="remember" class="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
+                    <span class="ms-2 text-base text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
                 </label>
-            </div>
 
-            <div class="flex items-center justify-end mt-4">
                 @if (Route::has('password.request'))
-                    <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
+                    <a class="text-base font-medium text-indigo-600 hover:text-indigo-500 hover:underline dark:text-indigo-400" href="{{ route('password.request') }}">
                         {{ __('Forgot your password?') }}
                     </a>
                 @endif
+            </div>
 
-                <x-button class="ms-4">
-                    {{ __('Log in') }}
-                </x-button>
+            <div class="mt-8">
+                <button type="submit" class="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-lg font-bold text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-all transform hover:-translate-y-0.5">
+                    {{ __('LOG IN') }}
+                </button>
             </div>
         </form>
     </x-authentication-card>

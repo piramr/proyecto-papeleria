@@ -27,6 +27,22 @@ class JetstreamServiceProvider extends ServiceProvider
         Jetstream::deleteUsersUsing(DeleteUser::class);
 
         Vite::prefetch(concurrency: 3);
+        
+        // Pass Security Question to Reset Password View
+        \Laravel\Fortify\Fortify::resetPasswordView(function ($request) {
+            $user = \App\Models\User::where('email', $request->email)->first();
+            $question = null;
+            
+            if ($user) {
+                $question = \Illuminate\Support\Facades\DB::table('user_security_answers')
+                                ->join('security_questions', 'user_security_answers.security_question_id', '=', 'security_questions.id')
+                                ->where('user_id', $user->id)
+                                ->select('security_questions.question')
+                                ->first();
+            }
+
+            return view('auth.reset-password', ['request' => $request, 'question' => $question?->question]);
+        });
     }
 
     /**

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('telefono', 10);
             $table->string('email')->unique();
             $table->string('genero', 20);
+            $table->string('role')->nullable();
             $table->date('fecha_nacimiento');
             $table->string('direccion');
             $table->timestamp('email_verified_at')->nullable();
