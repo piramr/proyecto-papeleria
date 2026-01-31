@@ -46,7 +46,7 @@ class ProveedorController extends Controller {
         }
 
         return redirect()
-            ->route('admin.proveedores.index')
+            ->route('admin.proveedores')
             ->with('success', 'Proveedor registrado correctamente');
     }
 
