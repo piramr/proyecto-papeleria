@@ -9,6 +9,7 @@ class Proveedor extends Model {
 
     use HasFactory;
 
+    protected $table = 'proveedores';
     protected $primaryKey = 'ruc';
     protected $keyType = 'string';
     public $incrementing = false;
