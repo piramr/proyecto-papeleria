@@ -8,7 +8,7 @@
             <h1>Compra {{ $compra->numero_compra }}</h1>
         </div>
         <div class="col-sm-6">
-            <a href="{{ route('compras.index') }}" class="btn btn-secondary float-right">
+            <a href="{{ route('admin.compras.index') }}" class="btn btn-secondary float-right">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
         </div>
@@ -194,7 +194,7 @@
                 </div>
                 <div class="card-body">
                     @if($compra->estado === 'pendiente')
-                        <a href="{{ route('compras.edit', $compra->id) }}" class="btn btn-warning btn-block mb-2">
+                        <a href="{{ route('admin.compras.edit', $compra->id) }}" class="btn btn-warning btn-block mb-2">
                             <i class="fas fa-edit"></i> Editar Compra
                         </a>
                         <button type="button" class="btn btn-success btn-block mb-2" onclick="marcarRecibida()">
@@ -215,7 +215,7 @@
 
                     <hr>
 
-                    <a href="{{ route('compras.index') }}" class="btn btn-secondary btn-block">
+                    <a href="{{ route('admin.compras.index') }}" class="btn btn-secondary btn-block">
                         <i class="fas fa-list"></i> Volver al Listado
                     </a>
                 </div>
@@ -227,7 +227,7 @@
     <div class="modal fade" id="modalRecibir" tabindex="-1" role="dialog" aria-labelledby="modalRecibirLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <form method="POST" action="{{ route('compras.recibir', $compra->id) }}">
+                <form method="POST" action="{{ route('admin.compras.recibir', $compra->id) }}">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="modalRecibirLabel">Marcar Compra como Recibida</h5>
@@ -255,7 +255,7 @@
     <div class="modal fade" id="modalCancelar" tabindex="-1" role="dialog" aria-labelledby="modalCancelarLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
-                <form method="POST" action="{{ route('compras.cancelar', $compra->id) }}">
+                <form method="POST" action="{{ route('admin.compras.cancelar', $compra->id) }}">
                     @csrf
                     <div class="modal-header">
                         <h5 class="modal-title" id="modalCancelarLabel">Cancelar Compra</h5>

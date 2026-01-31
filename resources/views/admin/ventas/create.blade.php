@@ -18,7 +18,7 @@
 
     <div class="row">
         <div class="col-md-8">
-            <form id="ventasForm" action="{{ route('ventas.store') }}" method="POST">
+            <form id="ventasForm" action="{{ route('admin.ventas.store') }}" method="POST">
                 @csrf
 
                 <!-- Sección: Datos del Cliente -->
@@ -170,7 +170,7 @@
                 <!-- Botones de acción -->
                 <div class="row">
                     <div class="col-md-6">
-                        <a href="{{ route('ventas.index') }}" class="btn btn-secondary w-100">
+                        <a href="{{ route('admin.ventas.index') }}" class="btn btn-secondary w-100">
                             <i class="fas fa-times"></i> Cancelar
                         </a>
                     </div>
@@ -238,7 +238,7 @@ function buscarCliente(cedula) {
     const aviso = document.getElementById('avisoCliente');
     aviso.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
 
-    fetch(`/api/cliente/${cedula}`)
+    fetch(`api/cliente/${cedula}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {

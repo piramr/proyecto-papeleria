@@ -8,7 +8,7 @@
             <h1>Nueva Compra</h1>
         </div>
         <div class="col-sm-6">
-            <a href="{{ route('compras.index') }}" class="btn btn-secondary float-right">
+            <a href="{{ route('admin.compras.index') }}" class="btn btn-secondary float-right">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
         </div>
@@ -30,7 +30,7 @@
         </div>
     @endif
 
-    <form action="{{ route('compras.store') }}" method="POST" id="formCompra">
+    <form action="{{ route('admin.compras.store') }}" method="POST" id="formCompra">
         @csrf
 
         <div class="row">
@@ -170,7 +170,7 @@
             <button type="submit" class="btn btn-primary">
                 <i class="fas fa-save"></i> Guardar Compra
             </button>
-            <a href="{{ route('compras.index') }}" class="btn btn-secondary">
+            <a href="{{ route('admin.compras.index') }}" class="btn btn-secondary">
                 <i class="fas fa-times"></i> Cancelar
             </a>
         </div>

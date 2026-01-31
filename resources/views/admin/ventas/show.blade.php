@@ -100,15 +100,15 @@
                         <i class="fas fa-print"></i> Imprimir Factura
                     </button>
                     
-                    <a href="{{ route('ventas.print', $factura->id) }}" target="_blank" class="btn btn-info w-100 mb-3">
+                    <a href="{{ route('admin.ventas.print', $factura->id) }}" target="_blank" class="btn btn-info w-100 mb-3">
                         <i class="fas fa-file-pdf"></i> Ver PDF
                     </a>
 
-                    <a href="{{ route('ventas.create') }}" class="btn btn-success w-100 mb-3">
+                    <a href="{{ route('admin.ventas.create') }}" class="btn btn-success w-100 mb-3">
                         <i class="fas fa-plus"></i> Nueva Venta
                     </a>
 
-                    <a href="{{ route('ventas.index') }}" class="btn btn-secondary w-100">
+                    <a href="{{ route('admin.ventas.index') }}" class="btn btn-secondary w-100">
                         <i class="fas fa-list"></i> Historial de Ventas
                     </a>
 

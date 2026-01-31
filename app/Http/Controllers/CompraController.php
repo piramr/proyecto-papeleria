@@ -36,7 +36,7 @@ class CompraController extends Controller {
      * Store a newly created compra in storage
      */
     public function store(Request $request) {
-        $this->validate($request, [
+        $validated = $request->validate([
             'proveedor_ruc' => 'required|exists:proveedores,ruc',
             'fecha_compra' => 'required|date',
             'tipo_pago_id' => 'nullable|exists:tipo_pagos,id',
@@ -253,19 +253,19 @@ class CompraController extends Controller {
             $proveedor = Proveedor::findOrFail($proveedorRuc);
             
             // Obtener productos del proveedor
-            $productos = DB::table('productos_proveedores')
-                ->join('productos', 'productos_proveedores.producto_id', '=', 'productos.id')
-                ->where('productos_proveedores.proveedor_ruc', $proveedorRuc)
+            $productos = DB::table('producto_proveedores')
+                ->join('productos', 'producto_proveedores.producto_id', '=', 'productos.id')
+                ->where('producto_proveedores.proveedor_ruc', $proveedorRuc)
                 ->select(
                     'productos.id',
                     'productos.nombre',
                     'productos.codigo_barras',
-                    'productos_proveedores.precio_costo',
+                    'producto_proveedores.precio_costo',
                     'productos.tiene_iva'
                 )
                 ->orderBy('productos.nombre')
                 ->get();
-
+            
             return response()->json($productos);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
@@ -294,8 +294,8 @@ class CompraController extends Controller {
         foreach ($detalles as $detalle) {
             $producto = Producto::findOrFail($detalle['producto_id']);
             
-            // Verificar que el producto existe en la tabla productos_proveedores
-            $existe = DB::table('productos_proveedores')
+            // Verificar que el producto existe en la tabla producto_proveedores
+            $existe = DB::table('producto_proveedores')
                 ->where('proveedor_ruc', $proveedorRuc)
                 ->where('producto_id', $detalle['producto_id'])
                 ->exists();
