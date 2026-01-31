@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\VentasController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -13,7 +14,13 @@ Route::middleware([
 ])->group(function () {
     Route::get('admin/dashboard', fn() => view('admin.dashboard'))->name('admin.dashboard');
 
-    Route::get('/admin/ventas', fn() => view('admin.ventas.index'));
+    // Rutas del módulo de Ventas
+    Route::resource('ventas', VentasController::class);
+    Route::resource('admin/ventas', VentasController::class);
+    Route::get('ventas/{factura}/print', [VentasController::class, 'print'])->name('ventas.print');
+    Route::get('admin/ventas/{factura}/print', [VentasController::class, 'print']);
+    Route::get('api/productos', [VentasController::class, 'getProductos'])->name('api.productos');
+    Route::get('api/cliente/{cedula}', [VentasController::class, 'getClienteByCedula'])->name('api.cliente');
     Route::get('/admin/analisis', fn() => view('admin.analisis.index'));
     Route::get('/admin/compras', fn() => view('admin.compras.index'));
     Route::get('/admin/productos', fn() => view('admin.inventario.productos'));
