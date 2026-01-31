@@ -1,57 +1,57 @@
-{{-- <x-app-layout>
+<x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Profile') }}
+            {{ __('Ajustes de Cuenta') }}
         </h2>
     </x-slot>
 
-    <div>
-        <div class="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-            @if (Laravel\Fortify\Features::canUpdateProfileInformation())
-                @livewire('profile.update-profile-information-form')
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8" 
+             x-data="{ activeTab: window.location.hash ? window.location.hash.substring(1) : 'profile' }"
+             @hashchange.window="activeTab = window.location.hash.substring(1)">
+            
+            <div class="row">
+                <!-- Content -->
+                <div class="col-md-12">
+                    <!-- Profile Information -->
+                    <div x-show="activeTab === 'profile'" x-transition.opacity>
+                        @if (Laravel\Fortify\Features::canUpdateProfileInformation())
+                            @livewire('profile.update-profile-information-form')
+                        @endif
+                    </div>
 
-                <x-section-border />
-            @endif
+                    <!-- Update Password -->
+                    <div x-show="activeTab === 'password'" x-transition.opacity style="display: none;">
+                        @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::updatePasswords()))
+                             @livewire('profile.update-password-form')
 
-            @if (Laravel\Fortify\Features::enabled(Laravel\Fortify\Features::updatePasswords()))
-                <div class="mt-10 sm:mt-0">
-                    @livewire('profile.update-password-form')
+                             <x-section-border />
+                             
+                             @livewire('profile.update-security-questions')
+                        @endif
+                    </div>
+
+                    <!-- 2FA -->
+                    <div x-show="activeTab === '2fa'" x-transition.opacity style="display: none;">
+                        @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
+                             @livewire('profile.two-factor-authentication-form')
+                        @endif
+                    </div>
+
+                    <!-- Browser Sessions -->
+                    <div x-show="activeTab === 'sessions'" x-transition.opacity style="display: none;">
+                         @livewire('profile.logout-other-browser-sessions-form')
+                    </div>
+
+                    <!-- Delete Account -->
+                    <div x-show="activeTab === 'delete'" x-transition.opacity style="display: none;">
+                        @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures())
+                             @livewire('profile.delete-user-form')
+                        @endif
+                    </div>
+
                 </div>
-
-                <x-section-border />
-            @endif
-
-            @if (Laravel\Fortify\Features::canManageTwoFactorAuthentication())
-                <div class="mt-10 sm:mt-0">
-                    @livewire('profile.two-factor-authentication-form')
-                </div>
-
-                <x-section-border />
-            @endif
-
-            <div class="mt-10 sm:mt-0">
-                @livewire('profile.logout-other-browser-sessions-form')
             </div>
-
-            @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures())
-                <x-section-border />
-
-                <div class="mt-10 sm:mt-0">
-                    @livewire('profile.delete-user-form')
-                </div>
-            @endif
         </div>
     </div>
-</x-app-layout> --}}
-
-
-@extends('layouts.app')
-@section('title', 'Perfil')
-
-@section('content')
-    <p>Perfil</p>
-@stop
-
-@section('css')
-    <link rel="stylesheet" href="/css/admin_custom.css">
-@stop
+</x-app-layout>

@@ -257,8 +257,8 @@ return [
     |
     */
 
-    'use_route_url' => false,
-    'dashboard_url' => 'admin/dashboard',
+    'use_route_url' => true,
+    'dashboard_url' => 'dashboard',
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -316,104 +316,223 @@ return [
             'type' => 'sidebar-menu-search',
             'text' => 'search',
         ],
+        // ===================== DASHBOARD =====================
         [
             'text' => 'Dashboard',
             'url'  => '/admin/dashboard',
-            'icon' => 'fas fa-fw fa-tachometer-alt', // Icono de tablero/velocímetro
+            'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can'  => 'Admin',
+        ],
+        [
+            'text' => 'Dashboard',
+            'url'  => '/empleado/dashboard',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can'  => 'Empleado',
+        ],
+
+        // ===================== ANÁLISIS =====================
+        [
+            'text'  => 'Análisis',
+            'url'   => '/admin/analisis',
+            'icon'  => 'fas fa-fw fa-chart-bar',
+            'color' => 'white',
+            'can'   => 'Admin',
         ],
         [
             'text'  => 'Análisis',
             'url'   => '/admin/analisis',
-            'icon'  => 'fas fa-fw fa-chart-bar', // Gráfico de barras
+            'icon'  => 'fas fa-fw fa-chart-bar',
             'color' => 'white',
+            'can'   => 'Empleado',
+        ],
+
+        // ===================== VENTAS =====================
+        [
+            'text'  => 'Ventas',
+            'url'   => '/admin/ventas',
+            'icon'  => 'fas fa-fw fa-shopping-cart',
+            'color' => 'white',
+            'can'   => 'Admin',
         ],
         [
             'text'  => 'Ventas',
             'url'   => '/admin/ventas',
-            'icon'  => 'fas fa-fw fa-shopping-cart', // Carrito de compras
+            'icon'  => 'fas fa-fw fa-shopping-cart',
             'color' => 'white',
+            'can'   => 'Empleado',
+        ],
+
+        // ===================== COMPRAS =====================
+        [
+            'text'  => 'Compras',
+            'url'   => '/admin/compras',
+            'icon'  => 'fas fa-fw fa-cash-register',
+            'color' => 'white',
+            'can'   => 'Admin',
         ],
         [
             'text'  => 'Compras',
             'url'   => '/admin/compras',
-            'icon'  => 'fas fa-fw fa-cash-register', // Caja registradora
+            'icon'  => 'fas fa-fw fa-cash-register',
             'color' => 'white',
+            'can'   => 'Empleado',
         ],
+
+        // ===================== INVENTARIO =====================
         [
             'text'    => 'Inventario',
             'url'     => '/admin/inventario',
-            'icon'    => 'fas fa-fw fa-boxes', // Cajas de inventario
+            'icon'    => 'fas fa-fw fa-boxes',
+            'can'     => 'Admin',
             'submenu' => [
                 [
                     'text' => 'Proveedores',
                     'url'  => '/admin/proveedores',
-                    'icon' => 'fas fa-fw fa-truck', // Camión de carga
+                    'icon' => 'fas fa-fw fa-truck',
                 ],
                 [
                     'text' => 'Productos',
                     'url'  => '/admin/productos',
-                    'icon' => 'fas fa-fw fa-tag', // Etiqueta de precio
+                    'icon' => 'fas fa-fw fa-tag',
                 ],
                 [
                     'text' => 'Categorías',
                     'url'  => '/admin/categorias',
-                    'icon' => 'fas fa-fw fa-list-ul', // Lista
+                    'icon' => 'fas fa-fw fa-list-ul',
                 ],
             ],
         ],
         [
+            'text'    => 'Inventario',
+            'url'     => '/admin/inventario',
+            'icon'    => 'fas fa-fw fa-boxes',
+            'can'     => 'Empleado',
+            'submenu' => [
+                [
+                    'text' => 'Proveedores',
+                    'url'  => '/admin/proveedores',
+                    'icon' => 'fas fa-fw fa-truck',
+                ],
+                [
+                    'text' => 'Productos',
+                    'url'  => '/admin/productos',
+                    'icon' => 'fas fa-fw fa-tag',
+                ],
+                [
+                    'text' => 'Categorías',
+                    'url'  => '/admin/categorias',
+                    'icon' => 'fas fa-fw fa-list-ul',
+                ],
+            ],
+        ],
+
+        // ===================== GESTION USUARIOS (SOLO ADMIN) =====================
+        [
             'text'  => 'Gestionar usuarios',
-            'icon'  => 'fas fa-fw fa-users-cog', // Usuarios con engranaje
+            'icon'  => 'fas fa-fw fa-users-cog',
             'color' => 'white',
+            'can'   => 'Admin',
             'submenu' => [
                 [
                     'text'  => 'Usuarios',
                     'url'   => '/admin/usuarios',
-                    'icon'  => 'fas fa-fw fa-users', // Usuarios con engranaje
+                    'icon'  => 'fas fa-fw fa-users',
                     'color' => 'white',
                 ],
                 [
                     'text'  => 'Roles',
                     'url'   => '/admin/roles',
-                    'icon'  => 'fas fa-fw fa-user-check', // Usuarios con engranaje
+                    'icon'  => 'fas fa-fw fa-user-check',
                     'color' => 'white',
                 ]
             ]
         ],
+
+        // ===================== CLIENTES =====================
         [
             'text'  => 'Clientes',
             'url'   => '/admin/clientes',
-            'icon'  => 'fas fa-fw fa-user-friends', // Amigos/Clientes
+            'icon'  => 'fas fa-fw fa-user-friends',
             'color' => 'white',
+            'can'   => 'Admin',
+        ],
+        [
+            'text'  => 'Clientes',
+            'url'   => '/admin/clientes',
+            'icon'  => 'fas fa-fw fa-user-friends',
+            'color' => 'white',
+            'can'   => 'Empleado',
+        ],
+
+        // ===================== REPORTES =====================
+        [
+            'text'  => 'Reportes',
+            'url'   => '/admin/reportes',
+            'icon'  => 'fas fa-fw fa-file-pdf',
+            'color' => 'white',
+            'can'   => 'Admin',
         ],
         [
             'text'  => 'Reportes',
             'url'   => '/admin/reportes',
-            'icon'  => 'fas fa-fw fa-file-pdf', // Reportes
+            'icon'  => 'fas fa-fw fa-file-pdf',
             'color' => 'white',
+            'can'   => 'Empleado',
         ],
+
 
         ['header' => 'account_settings'],
         [
             'text' => 'profile',
-            'url'  => '/admin/perfil',
-            'icon' => 'fas fa-fw fa-user-circle', // Usuario en círculo
+            'url'  => '/user/profile',
+            'icon' => 'fas fa-fw fa-user-circle',
+            'submenu' => [
+                [
+                    'text' => 'Información',
+                    'url'  => '/user/profile#profile',
+                    'icon' => 'fas fa-fw fa-id-card',
+                ],
+                [
+                    'text' => 'Contraseña',
+                    'url'  => '/user/profile#password',
+                    'icon' => 'fas fa-fw fa-lock',
+                ],
+                [
+                    'text' => 'Verificación (2FA)',
+                    'url'  => '/user/profile#2fa',
+                    'icon' => 'fas fa-fw fa-shield-alt',
+                ],
+                [
+                    'text' => 'Sesiones',
+                    'url'  => '/user/profile#sessions',
+                    'icon' => 'fas fa-fw fa-desktop',
+                ],
+            ],
         ],
         ['header' => 'Sistema'],
         [
             'text' => 'Auditoria',
-            'url'  => 'admin/auditoria',
+            'url'  => 'auditor/auditoria',
             'icon' => 'fas fa-fw fa-eye',
+            'can'  => 'Auditor',
         ],
         [
             'text' => 'Logs',
-            'url'  => 'admin/logs',
+            'url'  => 'auditor/auditoria',
             'icon' => 'fas fa-fw fa-file',
+            'can'  => 'Auditor',
         ],
         [
             'text' => 'Ajustes',
             'url'  => 'admin/ajustes',
             'icon' => 'fas fa-fw fa-cog',
+            'can'  => 'Admin',
+        ],
+        [
+            'text' => 'Ajustes',
+            'url'  => 'auditor/ajustes',
+            'icon' => 'fas fa-fw fa-cog',
+            'can'  => 'Auditor',
         ]
     ],
     /*

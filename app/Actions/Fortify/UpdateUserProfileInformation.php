@@ -18,8 +18,13 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
     public function update(User $user, array $input): void
     {
         Validator::make($input, [
-            'name' => ['required', 'string', 'max:255'],
+            'nombres' => ['required', 'string', 'max:255'],
+            'apellidos' => ['required', 'string', 'max:255'],
+            'cedula' => ['required', 'string', 'max:20', Rule::unique('users')->ignore($user->id)],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'telefono' => ['nullable', 'string', 'max:20'],
+            'genero' => ['nullable', 'string', 'max:20'],
+            'direccion' => ['nullable', 'string', 'max:255'],
             'photo' => ['nullable', 'mimes:jpg,jpeg,png', 'max:1024'],
         ])->validateWithBag('updateProfileInformation');
 
@@ -32,7 +37,12 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
             $this->updateVerifiedUser($user, $input);
         } else {
             $user->forceFill([
-                'name' => $input['name'],
+                'nombres' => $input['nombres'],
+                'apellidos' => $input['apellidos'],
+                'cedula' => $input['cedula'],
+                'telefono' => $input['telefono'],
+                'genero' => $input['genero'],
+                'direccion' => $input['direccion'],
                 'email' => $input['email'],
             ])->save();
         }
@@ -46,7 +56,12 @@ class UpdateUserProfileInformation implements UpdatesUserProfileInformation
     protected function updateVerifiedUser(User $user, array $input): void
     {
         $user->forceFill([
-            'name' => $input['name'],
+            'nombres' => $input['nombres'],
+            'apellidos' => $input['apellidos'],
+            'cedula' => $input['cedula'],
+            'telefono' => $input['telefono'],
+            'genero' => $input['genero'],
+            'direccion' => $input['direccion'],
             'email' => $input['email'],
             'email_verified_at' => null,
         ])->save();

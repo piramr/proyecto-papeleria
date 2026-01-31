@@ -49,6 +49,7 @@ class CreateNewUser implements CreatesNewUsers
             'fecha_nacimiento' => $input['fecha_nacimiento'],
             'direccion' => $input['direccion'],
             'password' => Hash::make($input['password']),
+            'role' => 'Pendiente',
         ]);
     }
 }
