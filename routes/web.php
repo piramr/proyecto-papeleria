@@ -90,11 +90,11 @@ Route::middleware([
         Route::post('/', [VentasController::class, 'store'])->name('store');
         Route::get('/{factura}', [VentasController::class, 'show'])->name('show');
         Route::get('/{factura}/print', [VentasController::class, 'print'])->name('print');
+        Route::get('api/cliente/{cedula}', [VentasController::class, 'getClienteByCedula'])->name('api.cliente');
     });
 
     // APIs auxiliares para ventas
     Route::get('api/productos', [VentasController::class, 'getProductos'])->name('api.productos');
-    Route::get('api/cliente/{cedula}', [VentasController::class, 'getClienteByCedula'])->name('api.cliente');
 
     // ===================== SOLO ADMIN =====================
     Route::middleware(['role:Admin'])->group(function () {

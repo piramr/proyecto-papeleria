@@ -38,7 +38,7 @@ class CompraSeeder extends Seeder {
             ]);
 
             // Obtener productos del proveedor
-            $productos = \DB::table('productos_proveedores')
+            $productos = \DB::table('producto_proveedores')
                 ->where('proveedor_ruc', $proveedor->ruc)
                 ->limit(rand(2, 5))
                 ->get();

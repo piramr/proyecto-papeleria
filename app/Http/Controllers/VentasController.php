@@ -47,7 +47,7 @@ class VentasController extends Controller
         $clientes = Cliente::orderBy('nombres')->get();
         $tiposPago = TipoPago::all();
 
-        return view('ventas.index', compact('facturas', 'clientes', 'tiposPago'));
+        return view('admin.ventas.index', compact('facturas', 'clientes', 'tiposPago'));
     }
 
     /**
@@ -59,7 +59,7 @@ class VentasController extends Controller
         $productos = Producto::where('cantidad_stock', '>', 0)->get();
         $tiposPago = TipoPago::all();
         
-        return view('ventas.create', compact('clientes', 'productos', 'tiposPago'));
+        return view('admin.ventas.create', compact('clientes', 'productos', 'tiposPago'));
     }
 
     /**
@@ -152,7 +152,7 @@ class VentasController extends Controller
             }
 
             DB::commit();
-
+            
             return redirect()->route('ventas.show', $factura->id)
                 ->with('success', 'Venta registrada correctamente. Factura #' . $factura->id);
 
@@ -168,7 +168,7 @@ class VentasController extends Controller
     public function show(Factura $factura)
     {
         $factura->load('cliente', 'tipoPago', 'detalles.producto');
-        return view('ventas.show', compact('factura'));
+        return view('admin.ventas.show', compact('factura'));
     }
 
     /**
@@ -177,7 +177,7 @@ class VentasController extends Controller
     public function print(Factura $factura)
     {
         $factura->load('cliente', 'tipoPago', 'detalles.producto');
-        return view('ventas.print', compact('factura'));
+        return view('admin.ventas.print', compact('factura'));
     }
 
     /**

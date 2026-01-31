@@ -8,7 +8,7 @@
             <h1>Compras a Proveedores</h1>
         </div>
         <div class="col-sm-6">
-            <a href="{{ route('compras.create') }}" class="btn btn-primary float-right">
+            <a href="{{ route('admin.compras.create') }}" class="btn btn-primary float-right">
                 <i class="fas fa-plus"></i> Nueva Compra
             </a>
         </div>
@@ -92,12 +92,12 @@
                                     <td>{{ $compra->usuario->name }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{{ route('compras.show', $compra->id) }}" 
+                                            <a href="{{ route('admin.compras.show', $compra->id) }}" 
                                                class="btn btn-sm btn-info" title="Ver">
                                                 <i class="fas fa-eye"></i>
                                             </a>
                                             @if($compra->estado === 'pendiente')
-                                                <a href="{{ route('compras.edit', $compra->id) }}" 
+                                                <a href="{{ route('admin.compras.edit', $compra->id) }}" 
                                                    class="btn btn-sm btn-warning" title="Editar">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
@@ -122,7 +122,7 @@
             @else
                 <div class="alert alert-info" role="alert">
                     <i class="fas fa-info-circle"></i> No hay compras registradas aún. 
-                    <a href="{{ route('compras.create') }}">Crear la primera compra</a>
+                    <a href="{{ route('admin.compras.create') }}">Crear la primera compra</a>
                 </div>
             @endif
         </div>
