@@ -13,7 +13,6 @@ class Proveedor extends Model {
     protected $primaryKey = 'ruc';
     protected $keyType = 'string';
     public $incrementing = false;
-    protected $table = 'proveedores';
 
 
     protected $fillable = [

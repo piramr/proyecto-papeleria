@@ -214,7 +214,7 @@
 
                 pageLength: 10,
 
-                ajax: "{{ route('proveedores.datatables') }}",
+                ajax: "{{ route('admin.proveedores.datatables') }}",
 
                 columns: [{
                         data: 'ruc'
@@ -289,13 +289,13 @@
             // Exportar PDF
             $('#exportProveedoresPdf').on('click', function(e) {
                 e.preventDefault();
-                window.open('{{ route('proveedores.export-pdf') }}', '_blank');
+                window.open('{{ route('admin.proveedores.export-pdf') }}', '_blank');
             });
 
             // Exportar Excel
             $('#exportProveedoresExcel').on('click', function(e) {
                 e.preventDefault();
-                window.location.href = '{{ route('proveedores.export-excel') }}';
+                window.location.href = '{{ route('admin.proveedores.export-excel') }}';
             });
 
             // Editar proveedor
@@ -303,7 +303,7 @@
                 const proveedorId = $(this).data('id');
 
                 $.ajax({
-                    url: '/proveedores/' + proveedorId + '/edit',
+                    url: 'proveedores/' + proveedorId + '/edit',
                     type: 'GET',
                     dataType: 'json',
                     success: function(data) {

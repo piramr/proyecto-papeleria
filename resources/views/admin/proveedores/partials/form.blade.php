@@ -1,4 +1,4 @@
-<form method="POST" action="{{ route('proveedores.store') }}" class="form-proveedor">
+<form method="POST" action="{{ route('admin.proveedores.store') }}" class="form-proveedor">
     @csrf
 
     <div class="row">

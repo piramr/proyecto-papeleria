@@ -1,4 +1,4 @@
-<form method="POST" action="{{ isset($categoria) ? route('categorias.update', $categoria) : route('categorias.store') }}">
+<form method="POST" action="{{ isset($categoria) ? route('admin.categorias.update', $categoria) : route('admin.categorias.store') }}">
     @csrf
     @if(isset($categoria))
         @method('PUT')

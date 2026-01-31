@@ -264,7 +264,7 @@
                 pageLength: 10,
 
                 ajax: {
-                    url: '{{ route('productos.datatables') }}',
+                    url: '{{ route('admin.productos.datatables') }}',
                     data: function(d) {
                         d.categoryid = categoryId;
                         d.provider_ruc = providerRuc;
@@ -365,7 +365,7 @@
                 e.preventDefault();
                 
                 // Construir la URL con los parámetros de filtro
-                let url = '{{ route('productos.export-pdf') }}';
+                let url = '{{ route('admin.productos.export-pdf') }}';
                 let params = [];
                 
                 if (categoryId !== '') {
@@ -389,7 +389,7 @@
                 e.preventDefault();
                 
                 // Construir la URL con los parámetros de filtro
-                let url = '{{ route('productos.export-excel') }}';
+                let url = '{{ route('admin.productos.export-excel') }}';
                 let params = [];
                 
                 if (categoryId !== '') {
@@ -413,7 +413,7 @@
                 const productoId = $(this).data('id');
 
                 $.ajax({
-                    url: '/productos/' + productoId + '/edit',
+                    url: 'productos/' + productoId + '/edit',
                     type: 'GET',
                     dataType: 'json',
                     success: function(data) {

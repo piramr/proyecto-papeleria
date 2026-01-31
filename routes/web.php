@@ -7,6 +7,8 @@ use App\Http\Controllers\CompraController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VentasController;
+use App\Models\Categoria;
+use App\Models\Proveedor;
 
 Route::get('/', fn() => view('welcome'));
 
@@ -24,7 +26,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
     Route::get('two-factor-auth/resend', [\App\Http\Controllers\TwoFactorController::class, 'resend'])->name('two-factor.resend');
 });
 
-// ✅ Ruta universal: redirige según rol
 Route::middleware([
     'auth:sanctum',
     config('jetstream.auth_session'),
@@ -59,8 +60,11 @@ Route::middleware([
     // Módulos compartidos (vistas)
     Route::get('/ventas', fn() => view('admin.ventas.index'))->name('ventas');
     Route::get('/analisis', fn() => view('admin.analisis.index'))->name('analisis');
-    Route::get('/productos', fn() => view('admin.inventario.productos'))->name('productos');
-    Route::get('/categorias', fn() => view('admin.inventario.categorias'))->name('categorias');
+    Route::get('/productos', fn() => view('admin.inventario.productos.index', [
+        'categorias' => Categoria::all(),
+        'proveedores' => Proveedor::all(),
+    ]))->name('productos');
+    Route::get('/categorias', fn() => view('admin.inventario.categorias.index'))->name('categorias');
     Route::get('/proveedores', fn() => view('admin.proveedores.index'))->name('proveedores');
     Route::resource('clientes', \App\Http\Controllers\Admin\ClienteController::class);
     Route::get('/reportes', fn() => view('admin.reportes.index'))->name('reportes');
@@ -104,14 +108,11 @@ Route::middleware([
         Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class)->except(['show']);
     });
 
-    // Inventario (acciones)
     Route::post('/proveedores', [ProveedorController::class, 'store'])->name('proveedores.store');
     Route::get('/proveedores/{proveedor}/edit', [ProveedorController::class, 'edit'])->name('proveedores.edit');
     Route::put('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('proveedores.update');
     Route::delete('/proveedores/{proveedor}', [ProveedorController::class, 'destroy'])->name('proveedores.destroy');
     Route::get('/proveedores/datatables', [ProveedorController::class, 'datatables'])->name('proveedores.datatables');
-    Route::get('/proveedores/export-pdf', [ProveedorController::class, 'exportPdf'])->name('proveedores.export-pdf');
-    Route::get('/proveedores/export-excel', [ProveedorController::class, 'exportExcel'])->name('proveedores.export-excel');
 
     Route::post('/categorias', [CategoriaController::class, 'store'])->name('categorias.store');
     Route::get('/categorias/{categoria}/edit', [CategoriaController::class, 'edit'])->name('categorias.edit');
@@ -126,6 +127,11 @@ Route::middleware([
     Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
     Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
+
+    Route::get('/proveedores/export-pdf', [ProveedorController::class, 'exportPdf'])->name('proveedores.export-pdf');
+    Route::get('/proveedores/export-excel', [ProveedorController::class, 'exportExcel'])->name('proveedores.export-excel');
+
+    Route::get('/pdf', [ProductoController::class, 'exportPdf']);
 });
 
 
