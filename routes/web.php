@@ -6,6 +6,7 @@ use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CompraController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\VentasController;
 
 Route::get('/', fn() => view('welcome'));
 
@@ -77,6 +78,19 @@ Route::middleware([
         Route::get('productos-proveedor/{proveedorRuc}', [CompraController::class, 'obtenerProductosProveedor'])->name('productos-proveedor');
         Route::get('{compra}/factura', [CompraController::class, 'generarFactura'])->name('factura');
     });
+
+    // ✅ Rutas para ventas (módulo)
+    Route::prefix('ventas')->name('ventas.')->group(function () {
+        Route::get('/', [VentasController::class, 'index'])->name('index');
+        Route::get('/create', [VentasController::class, 'create'])->name('create');
+        Route::post('/', [VentasController::class, 'store'])->name('store');
+        Route::get('/{factura}', [VentasController::class, 'show'])->name('show');
+        Route::get('/{factura}/print', [VentasController::class, 'print'])->name('print');
+    });
+
+    // APIs auxiliares para ventas
+    Route::get('api/productos', [VentasController::class, 'getProductos'])->name('api.productos');
+    Route::get('api/cliente/{cedula}', [VentasController::class, 'getClienteByCedula'])->name('api.cliente');
 
     // ===================== SOLO ADMIN =====================
     Route::middleware(['role:Admin'])->group(function () {

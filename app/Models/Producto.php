@@ -22,6 +22,15 @@ class Producto extends Model {
         'categoria_id',
     ];
 
+    // Alias para compatibilidad
+    public function getStockAttribute() {
+        return $this->cantidad_stock;
+    }
+
+    public function getPrecioAttribute() {
+        return $this->precio_unitario;
+    }
+
     public function categoria() {
         return $this->belongsTo(Categoria::class);
     }
