@@ -45,7 +45,7 @@
     </body>
 </html> --}}
 {{-- resources/views/layouts/app.blade.php --}}
-@extends('adminlte::page')
+{{-- @extends('adminlte::page')
 
 @section('title', 'Perfil')
 
@@ -66,4 +66,15 @@
 
 @section('js')
     @livewireScripts
+@stop --}}
+
+@extends('adminlte::page')
+
+@section('css')
+    
+@stop
+
+@section('js')
+    {{-- Aquí puedes poner el script de wire:navigate que querías --}}
+    
 @stop

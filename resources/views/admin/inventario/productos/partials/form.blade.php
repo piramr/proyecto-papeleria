@@ -1,4 +1,4 @@
-<form action="{{ isset($producto) ? route('productos.update', $producto->id) : route('productos.store') }}"
+<form action="{{ isset($producto) ? route('admin.productos.update', $producto->id) : route('admin.productos.store') }}"
     method="POST">
     @csrf
     @if (isset($producto))

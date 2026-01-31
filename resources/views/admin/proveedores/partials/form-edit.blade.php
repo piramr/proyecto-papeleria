@@ -1,4 +1,4 @@
-<form method="POST" action="{{ route('proveedores.update', $proveedor->ruc) }}" class="form-proveedor">
+<form method="POST" action="{{ route('admin.proveedores.update', $proveedor->ruc) }}" class="form-proveedor">
     @csrf
     @method('PUT')
 

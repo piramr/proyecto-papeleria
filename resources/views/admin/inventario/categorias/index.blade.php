@@ -203,7 +203,7 @@
 
                 pageLength: 10,
 
-                ajax: "{{ route('categorias.datatables') }}",
+                ajax: "{{ route('admin.categorias.datatables') }}",
 
                 columns: [{
                         data: 'nombre'
@@ -273,7 +273,7 @@
                 const categoriaId = $(this).data('id');
 
                 $.ajax({
-                    url: '/categorias/' + categoriaId + '/edit',
+                    url: 'categorias/' + categoriaId + '/edit',
                     type: 'GET',
                     dataType: 'json',
                     success: function(data) {
