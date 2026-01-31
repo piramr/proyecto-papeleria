@@ -4,6 +4,11 @@
             <x-authentication-card-logo />
         </x-slot>
 
+        <div class="mb-4 px-4 py-3 bg-blue-50 border-l-4 border-blue-500 text-blue-700 dark:bg-blue-900 dark:border-blue-700 dark:text-blue-100 p-4" role="alert">
+            <p class="font-bold">¡Atención!</p>
+            <p class="text-sm">Una vez registrado, debes comunicarte con el <strong>Administrador del Sistema</strong> para que te asigne el rol correspondiente (Auditor, Administrador o Empleado) y puedas acceder correctamente.</p>
+        </div>
+
         <form method="POST" action="{{ route('register') }}">
             @csrf
 

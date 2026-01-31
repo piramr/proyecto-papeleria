@@ -1,0 +1,13 @@
+APP_NAME="Papelería"
+APP_ENV=local
+APP_KEY=base64:XkXkXkXkXkXkXkXkXkXkXkXkXkXkXkXkXkXkXkXkXkX=
+APP_DEBUG=true
+APP_TIMEZONE=America/Guayaquil
+APP_URL=http://localhost
+
+APP_LOCALE=es
+APP_FALLBACK_LOCALE=en
+APP_FAKER_LOCALE=es_ES
+
+MAINTENANCE_DRIVER=file
+# ... (rest of .env)
