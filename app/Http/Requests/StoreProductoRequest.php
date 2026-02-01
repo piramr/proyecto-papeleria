@@ -33,7 +33,9 @@ class StoreProductoRequest extends FormRequest {
             'precio_oferta' => 'required_if:en_oferta,1|numeric|min:0.01|lt:precio_unitario',
             'categoria_id' => 'required|integer|exists:categorias,id',
             'proveedor_ruc' => 'required|array',
-            'proveedor_ruc.*' => 'string|max:13|exists:proveedores,ruc'
+            'proveedor_ruc.*' => 'string|max:13|exists:proveedores,ruc',
+            'proveedor_precio_costo' => 'required|array',
+            'proveedor_precio_costo.*' => 'numeric|min:0.01'
         ];
     }
 
@@ -70,7 +72,9 @@ class StoreProductoRequest extends FormRequest {
 
             'categoria_id.exists' => 'La categoría seleccionada no existe',
 
-            'proveedor_ruc.*.exists' => 'Uno de los proveedores seleccionados no existe'
+            'proveedor_ruc.*.exists' => 'Uno de los proveedores seleccionados no existe',
+            'proveedor_precio_costo.*.numeric' => 'El precio de costo debe ser un número válido',
+            'proveedor_precio_costo.*.min' => 'El precio de costo debe ser mayor a 0'
         ];
     }
 }

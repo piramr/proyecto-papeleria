@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
     {
         // Admin User
         $admin = User::firstOrCreate(
-            ['email' => 'admin@papeleria.com'],
+            ['email' => 'viwic25197@juhxs.com'],
             [
                 'nombres' => 'Administrador',
                 'apellidos' => 'Sistema',
