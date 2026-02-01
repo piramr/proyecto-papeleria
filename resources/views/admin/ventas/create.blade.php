@@ -85,6 +85,19 @@
                                 <div id="avisoMenor" class="form-text"></div>
                             </div>
                         </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="numero_factura" class="form-label">Número de Factura *</label>
+                                <input type="text" class="form-control @error('numero_factura') is-invalid @enderror" 
+                                       id="numero_factura" name="numero_factura" value="{{ old('numero_factura') }}" 
+                                       placeholder="Ej. 001-001-000000001" required>
+                                <small class="form-text text-muted">Número secuencial único para el SRI</small>
+                                @error('numero_factura')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -200,6 +213,11 @@
                         <h5 id="subtotalMonto">$0.00</h5>
                     </div>
 
+                    <div class="mb-3 pb-3 border-bottom">
+                        <label class="form-label text-muted">IVA (15%)</label>
+                        <h5 id="ivaMonto" class="text-info">$0.00</h5>
+                    </div>
+
                     <div class="mb-4">
                         <label class="form-label text-muted">Total</label>
                         <h3 class="text-success" id="totalMonto">$0.00</h3>
@@ -216,6 +234,60 @@
 
 <script>
 let productos = [];
+
+// Validar formulario antes de enviar
+document.getElementById('ventasForm').addEventListener('submit', function(e) {
+    console.log('Formulario enviándose...');
+    console.log('Productos:', productos);
+    
+    // Validar que haya productos
+    if (productos.length === 0) {
+        e.preventDefault();
+        alert('⚠️ Debes agregar al menos un producto para registrar la venta');
+        console.log('ERROR: No hay productos');
+        return false;
+    }
+
+    // Validar tipo de pago
+    const tipoPago = document.getElementById('tipo_pago_id').value;
+    console.log('Tipo de pago:', tipoPago);
+    if (!tipoPago) {
+        e.preventDefault();
+        alert('⚠️ Debes seleccionar una forma de pago');
+        console.log('ERROR: No hay tipo de pago');
+        return false;
+    }
+
+    // Validar datos del cliente
+    const cedula = document.getElementById('cliente_cedula').value.trim();
+    const nombres = document.getElementById('cliente_nombres').value.trim();
+    const apellidos = document.getElementById('cliente_apellidos').value.trim();
+
+    console.log('Cliente:', { cedula, nombres, apellidos });
+
+    if (!cedula || !nombres || !apellidos) {
+        e.preventDefault();
+        alert('⚠️ Debes completar los datos del cliente (Cédula, Nombres y Apellidos)');
+        console.log('ERROR: Faltan datos del cliente');
+        return false;
+    }
+
+    // Mostrar confirmación
+    const total = document.getElementById('totalMonto').textContent;
+    if (!confirm(`¿Confirmar registro de venta por ${total}?`)) {
+        e.preventDefault();
+        console.log('Usuario canceló la confirmación');
+        return false;
+    }
+
+    console.log('Validación OK - Enviando formulario...');
+    // Deshabilitar botón para evitar doble envío
+    document.getElementById('btnGuardar').disabled = true;
+    document.getElementById('btnGuardar').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+    
+    // Permitir que el formulario se envíe
+    return true;
+});
 
 // Buscar cliente por cédula
 document.getElementById('cliente_cedula').addEventListener('blur', function() {
@@ -238,7 +310,7 @@ function buscarCliente(cedula) {
     const aviso = document.getElementById('avisoCliente');
     aviso.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
 
-    fetch(`api/cliente/${cedula}`)
+    fetch(`{{ url('admin/ventas/api/cliente') }}/${cedula}`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -399,10 +471,21 @@ function actualizarTabla() {
     });
 
     document.getElementById('cantidadArticulos').textContent = cantidadTotal;
+    
+    // Calcular IVA (15%) y total
+    const iva = subtotal * 0.15;
+    const totalConIva = subtotal + iva;
+    
     document.getElementById('subtotalMonto').textContent = '$' + subtotal.toFixed(2);
-    document.getElementById('totalMonto').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('ivaMonto').textContent = '$' + iva.toFixed(2);
+    document.getElementById('totalMonto').textContent = '$' + totalConIva.toFixed(2);
     document.getElementById('avisoProductos').style.display = 'none';
     document.getElementById('btnGuardar').disabled = false;
 }
+
+// Inicializar el botón como deshabilitado al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('btnGuardar').disabled = true;
+});
 </script>
 @endsection

@@ -90,6 +90,7 @@ Route::middleware([
         Route::post('/', [VentasController::class, 'store'])->name('store');
         Route::get('/{factura}', [VentasController::class, 'show'])->name('show');
         Route::get('/{factura}/print', [VentasController::class, 'print'])->name('print');
+        Route::delete('/{factura}', [VentasController::class, 'destroy'])->name('destroy');
         Route::get('api/cliente/{cedula}', [VentasController::class, 'getClienteByCedula'])->name('api.cliente');
     });
 

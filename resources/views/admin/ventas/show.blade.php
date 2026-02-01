@@ -2,6 +2,21 @@
 
 @section('content')
 <div class="container mt-4">
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show no-print" role="alert">
+            <i class="fas fa-check-circle"></i> <strong>{{ session('success') }}</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
     <div class="row">
         <div class="col-md-8">
             <div class="card">
@@ -13,8 +28,8 @@
                     <div class="row mb-4 pb-4 border-bottom">
                         <div class="col-md-6">
                             <h2>FACTURA</h2>
-                            <p class="mb-1"><strong>Número:</strong> #{{ $factura->id }}</p>
-                            <p class="mb-0"><strong>Fecha:</strong> {{ $factura->fecha_hora->format('d/m/Y H:i') }}</p>
+                            <p class="mb-1"><strong>Número:</strong> #{{ $factura->numero_factura }}</p>
+                            <p class="mb-0"><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($factura->fecha_hora)->format('d/m/Y H:i') }}</p>
                         </div>
                         <div class="col-md-6 text-end">
                             <h5>Papelería XYZ</h5>
@@ -73,6 +88,10 @@
                                     <td class="text-end">Subtotal:</td>
                                     <td class="text-end">${{ number_format($factura->subtotal, 2) }}</td>
                                 </tr>
+                                <tr>
+                                    <td class="text-end">IVA (15%):</td>
+                                    <td class="text-end">${{ number_format($factura->iva, 2) }}</td>
+                                </tr>
                                 <tr class="table-active">
                                     <td class="text-end"><strong>TOTAL:</strong></td>
                                     <td class="text-end"><h5 class="text-success">${{ number_format($factura->total, 2) }}</h5></td>
@@ -90,7 +109,7 @@
         </div>
 
         <!-- Opciones de acción -->
-        <div class="col-md-4">
+        <div class="col-md-4 no-print">
             <div class="card sticky-top" style="top: 20px;">
                 <div class="card-header bg-dark text-white">
                     <h5 class="mb-0">Opciones</h5>
@@ -115,7 +134,7 @@
                     <hr>
                     
                     <div class="alert alert-info text-center mb-0">
-                        <small>Factura #{{ $factura->id }} registrada exitosamente</small>
+                        <small>Factura #{{ $factura->numero_factura }} registrada exitosamente</small>
                     </div>
                 </div>
             </div>

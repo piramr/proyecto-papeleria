@@ -9,6 +9,7 @@ use App\Models\Producto;
 use App\Models\TipoPago;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class VentasController extends Controller
@@ -40,7 +41,7 @@ class VentasController extends Controller
 
         // Filtro por número de factura
         if ($request->filled('numero_factura')) {
-            $query->where('id', $request->numero_factura);
+            $query->where('numero_factura', 'like', '%' . $request->numero_factura . '%');
         }
 
         $facturas = $query->orderBy('created_at', 'desc')->paginate(15);
@@ -67,7 +68,13 @@ class VentasController extends Controller
      */
     public function store(Request $request)
     {
+        Log::info('VentasController@store iniciado', [
+            'user_id' => auth()->id(),
+            'payload' => $request->all(),
+        ]);
+
         $validated = $request->validate([
+            'numero_factura' => 'required|string|unique:facturas|max:20',
             'cliente_cedula' => 'required|string|max:20',
             'cliente_nombres' => 'required|string|max:100',
             'cliente_apellidos' => 'required|string|max:100',
@@ -124,15 +131,19 @@ class VentasController extends Controller
                 $subtotal += $item['cantidad'] * $item['precio'];
             }
 
-            $total = $subtotal;
+            // Calcular IVA del 15%
+            $iva = $subtotal * 0.15;
+            $total = $subtotal + $iva;
 
             // Crear factura
             $factura = Factura::create([
+                'numero_factura' => $validated['numero_factura'],
                 'fecha_hora' => now(),
                 'cliente_cedula' => $cliente->cedula,
                 'usuario_id' => auth()->id(),
                 'tipo_pago_id' => $validated['tipo_pago_id'],
                 'subtotal' => $subtotal,
+                'iva' => $iva,
                 'total' => $total,
             ]);
 
@@ -143,7 +154,7 @@ class VentasController extends Controller
                     'producto_id' => $item['id'],
                     'cantidad' => $item['cantidad'],
                     'precio_unitario' => $item['precio'],
-                    'subtotal' => $item['cantidad'] * $item['precio'],
+                    'total' => $item['cantidad'] * $item['precio'],
                 ]);
 
                 // Restar del stock
@@ -153,11 +164,15 @@ class VentasController extends Controller
 
             DB::commit();
             
-            return redirect()->route('ventas.show', $factura->id)
-                ->with('success', 'Venta registrada correctamente. Factura #' . $factura->id);
+            return redirect()->route('admin.ventas.show', $factura->id)
+                ->with('success', 'Venta registrada correctamente. Factura #' . $factura->numero_factura);
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error al procesar venta', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return back()->with('error', 'Error al procesar la venta: ' . $e->getMessage());
         }
     }
@@ -232,7 +247,7 @@ class VentasController extends Controller
 
             DB::commit();
 
-            return redirect()->route('ventas.index')
+            return redirect()->route('admin.ventas.index')
                 ->with('success', 'Factura #' . $factura->id . ' anulada correctamente. Stock restaurado.');
 
         } catch (\Exception $e) {
