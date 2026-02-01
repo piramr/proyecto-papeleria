@@ -6,30 +6,16 @@
 
 @section('content')
 <div class="container-fluid">
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle"></i> <strong>{{ session('success') }}</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle"></i> <strong>{{ session('error') }}</strong>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
         <div>
             <h1 class="mb-1">Historial de Ventas</h1>
             <p class="text-muted mb-0">Revisa movimientos recientes, totales y acceso rápido a la creación de facturas.</p>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <a href="{{ route('admin.ventas.create') }}" class="btn btn-primary shadow-sm" style="border-radius: 20px; padding: 0.4rem 1rem; font-size: 0.9rem;">
+            <a href="{{ route('ventas.create') }}" class="btn btn-primary shadow-sm" style="border-radius: 20px; padding: 0.4rem 1rem; font-size: 0.9rem;">
                 <i class="fas fa-plus"></i> Nueva Venta
             </a>
-            <a href="{{ route('admin.ventas.index') }}" class="btn btn-info" style="border-radius: 50%; width: 38px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; margin-left: 20px;" title="Actualizar tabla" data-bs-toggle="tooltip">
+            <a href="{{ route('ventas.index') }}" class="btn btn-info" style="border-radius: 50%; width: 38px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1rem; margin-left: 20px;" title="Actualizar tabla" data-bs-toggle="tooltip">
                 <i class="fas fa-sync-alt"></i>
             </a>
         </div>
@@ -65,7 +51,7 @@
                     <div class="mb-2">
                         <i class="fas fa-clock text-info" style="font-size: 2.5rem;"></i>
                     </div>
-                    <h5 class="mb-1 fw-bold text-info">{{ optional($facturas->first())->fecha_hora ? \Carbon\Carbon::parse($facturas->first()->fecha_hora)->format('H:i') : '--:--' }}</h5>
+                    <h5 class="mb-1 fw-bold text-info">{{ optional($facturas->first())->fecha_hora?->format('H:i') ?? '--:--' }}</h5>
                     <p class="text-muted mb-0 small">Última venta registrada</p>
                 </div>
             </div>
@@ -78,14 +64,14 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h6 class="mb-0"><i class="fas fa-filter"></i> Filtros de búsqueda</h6>
                 @if(request()->hasAny(['fecha_desde', 'fecha_hasta', 'cliente_cedula', 'tipo_pago_id', 'numero_factura']))
-                    <a href="{{ route('admin.ventas.index') }}" class="btn btn-sm btn-outline-danger" title="Restaurar vista inicial">
+                    <a href="{{ route('ventas.index') }}" class="btn btn-sm btn-outline-danger" title="Restaurar vista inicial">
                         <i class="fas fa-undo"></i> Limpiar
                     </a>
                 @endif
             </div>
         </div>
         <div class="card-body">
-            <form action="{{ route('admin.ventas.index') }}" method="GET" class="row g-2">
+            <form action="{{ route('ventas.index') }}" method="GET" class="row g-2">
                 <!-- Fechas -->
                 <div class="col-md-2">
                     <label for="fecha_desde" class="form-label small fw-semibold">📅 Desde</label>
@@ -122,7 +108,7 @@
                 <!-- Nº Factura -->
                 <div class="col-md-1">
                     <label for="numero_factura" class="form-label small fw-semibold">🔢 Fact.</label>
-                    <input type="text" class="form-control form-control-sm" id="numero_factura" name="numero_factura" 
+                    <input type="number" class="form-control form-control-sm" id="numero_factura" name="numero_factura" 
                            placeholder="#" value="{{ request('numero_factura') }}">
                 </div>
 
@@ -169,14 +155,14 @@
                     @forelse($facturas as $factura)
                         <tr>
                             <td>
-                                <span class="badge bg-secondary-subtle text-secondary fw-semibold">#{{ $factura->numero_factura }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary fw-semibold">#{{ $factura->id }}</span>
                             </td>
                             <td>
                                 <div class="fw-semibold">{{ $factura->cliente->nombres }} {{ $factura->cliente->apellidos }}</div>
                                 <div class="text-muted small">{{ $factura->cliente->cedula }}</div>
                             </td>
                             <td>
-                                    <span class="badge bg-light text-dark border">{{ \Carbon\Carbon::parse($factura->fecha_hora)->format('d/m/Y H:i') }}</span>
+                                <span class="badge bg-light text-dark border">{{ $factura->fecha_hora->format('d/m/Y H:i') }}</span>
                             </td>
                             <td class="text-end text-muted">${{ number_format($factura->subtotal, 2) }}</td>
                             <td class="text-end">
@@ -198,7 +184,7 @@
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm" role="group">
                                     <!-- Ver Detalle -->
-                                    <a href="{{ route('admin.ventas.show', $factura->id) }}" 
+                                    <a href="{{ route('ventas.show', $factura->id) }}" 
                                        class="btn btn-outline-primary" 
                                        title="Ver detalle de la factura"
                                        data-bs-toggle="tooltip"
@@ -207,7 +193,7 @@
                                     </a>
                                     
                                     <!-- Imprimir / PDF -->
-                                    <a href="{{ route('admin.ventas.print', $factura->id) }}" 
+                                    <a href="{{ route('ventas.print', $factura->id) }}" 
                                        class="btn btn-outline-warning" 
                                        title="Imprimir o descargar PDF"
                                        data-bs-toggle="tooltip"
@@ -217,10 +203,10 @@
                                     </a>
                                     
                                     <!-- Anular Factura -->
-                                    <form action="{{ route('admin.ventas.destroy', $factura->id) }}" 
+                                    <form action="{{ route('ventas.destroy', $factura->id) }}" 
                                           method="POST" 
                                           style="display: inline;"
-                                          onsubmit="return confirm('⚠️ ¿Estás seguro de anular la factura #{{ $factura->numero_factura }}?\n\nEsta acción:\n✓ Eliminará la factura\n✓ Devolverá el stock de los productos\n✓ No se podrá deshacer');">
+                                          onsubmit="return confirm('⚠️ ¿Estás seguro de anular la factura #{{ $factura->id }}?\n\nEsta acción:\n✓ Eliminará la factura\n✓ Devolverá el stock de los productos\n✓ No se podrá deshacer');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
@@ -241,7 +227,7 @@
                                     <i class="fas fa-file-invoice-dollar fa-2x mb-2"></i>
                                     <p class="mb-1">No hay ventas registradas</p>
                                     <small class="mb-3">Crea la primera venta para comenzar a ver el historial.</small>
-                                    <a href="{{ route('admin.ventas.create') }}" class="btn btn-primary btn-sm">
+                                    <a href="{{ route('ventas.create') }}" class="btn btn-primary btn-sm">
                                         <i class="fas fa-plus"></i> Nueva Venta
                                     </a>
                                 </div>
