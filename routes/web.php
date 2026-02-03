@@ -4,6 +4,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CompraController;
+use App\Http\Controllers\ReportesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VentasController;
@@ -67,7 +68,17 @@ Route::middleware([
     Route::get('/categorias', fn() => view('admin.inventario.categorias.index'))->name('categorias');
     Route::get('/proveedores', fn() => view('admin.proveedores.index'))->name('proveedores');
     Route::resource('clientes', \App\Http\Controllers\Admin\ClienteController::class);
-    Route::get('/reportes', fn() => view('admin.reportes.index'))->name('reportes');
+    
+    // ✅ Rutas para reportes
+    Route::prefix('reportes')->name('reportes.')->group(function () {
+        Route::get('/', [ReportesController::class, 'index'])->name('index');
+        Route::get('ventas/pdf', [ReportesController::class, 'ventasPdf'])->name('ventas.pdf');
+        Route::get('ventas/excel', [ReportesController::class, 'ventasExcel'])->name('ventas.excel');
+        Route::get('compras/pdf', [ReportesController::class, 'comprasPdf'])->name('compras.pdf');
+        Route::get('compras/excel', [ReportesController::class, 'comprasExcel'])->name('compras.excel');
+        Route::get('ganancias/excel', [ReportesController::class, 'gananciasExcel'])->name('ganancias.excel');
+        Route::get('inventario/excel', [ReportesController::class, 'inventarioExcel'])->name('inventario.excel');
+    });
 
     // ✅ Rutas para compras (módulo)
     Route::prefix('compras')->name('compras.')->group(function () {
