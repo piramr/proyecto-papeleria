@@ -41,7 +41,9 @@ class UpdateProductoRequest extends FormRequest {
             'precio_oferta' => 'required_if:en_oferta,1|numeric|min:0.01|lt:precio_unitario',
             'categoria_id' => 'required|integer|exists:categorias,id',
             'proveedor_ruc' => 'required|array',
-            'proveedor_ruc.*' => 'string|max:13|exists:proveedores,ruc'
+            'proveedor_ruc.*' => 'string|max:13|exists:proveedores,ruc',
+            'precio_costo' => 'required|array',
+            'precio_costo.*' => 'numeric|min:0.01'
         ];
     }
 
