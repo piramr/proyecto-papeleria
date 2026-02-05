@@ -39,7 +39,7 @@ class CompraController extends Controller {
         $validated = $request->validate([
             'proveedor_ruc' => 'required|exists:proveedores,ruc',
             'fecha_compra' => 'required|date',
-            'tipo_pago_id' => 'nullable|exists:tipo_pagos,id',
+            'tipo_pago_id' => 'required|exists:tipo_pagos,id',
             'descripcion' => 'nullable|string',
             'detalles' => 'required|array|min:1',
             'detalles.*.producto_id' => 'required|exists:productos,id',
@@ -86,8 +86,8 @@ class CompraController extends Controller {
 
             DB::commit();
 
-            return redirect()->route('compras.show', $compra->id)
-                ->with('success', 'Compra creada exitosamente. Número: ' . $compra->numero_compra);
+            return redirect()->route('admin.compras.show', $compra->id)
+                ->with('success', 'Compra realizada exitosamente. Número de compra: ' . $compra->numero_compra);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -130,7 +130,7 @@ class CompraController extends Controller {
         $this->validate($request, [
             'proveedor_ruc' => 'required|exists:proveedores,ruc',
             'fecha_compra' => 'required|date',
-            'tipo_pago_id' => 'nullable|exists:tipo_pagos,id',
+            'tipo_pago_id' => 'required|exists:tipo_pagos,id',
             'descripcion' => 'nullable|string',
             'detalles' => 'required|array|min:1',
             'detalles.*.producto_id' => 'required|exists:productos,id',

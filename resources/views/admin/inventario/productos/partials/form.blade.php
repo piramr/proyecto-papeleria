@@ -182,7 +182,7 @@
                 <p class="card-header h5">Proveedores</p>
                 <div class="card-body">
                     <div class="row align-items-end mb-4">
-                        <div class="form-group col-md-5 mb-0">
+                        <div class="form-group col-md-4 mb-0">
                             <select class="form-control" id="selectProveedor">
                                 <option value="">-- Seleccione proveedor --</option>
                                 @foreach ($proveedores as $proveedor)
@@ -191,6 +191,10 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div class="form-group col-md-3 mb-0">
+                            <label for="precioCostoInput" class="mb-1 small">Precio de costo</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="precioCostoInput" placeholder="0.00">
                         </div>
                         <div class="col-md-2">
                             <button type="button" id="btnAgregarProveedor"
@@ -204,21 +208,24 @@
                                 <tr>
                                     <th>Proveedor</th>
                                     <th>RUC</th>
+                                    <th>Precio de costo</th>
                                     <th width="100px" class="text-center">Acción</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if (isset($producto) && $producto->proveedores->count() > 0)
                                     @foreach ($producto->proveedores as $proveedor)
-                                        <tr class="proveedor-row" data-ruc="{{ $proveedor->ruc }}">
+                                        <tr class="proveedor-row" data-ruc="{{ $proveedor->ruc }}" data-precio="{{ $proveedor->pivot->precio_costo }}">
                                             <td>{{ $proveedor->nombre }}</td>
                                             <td>{{ $proveedor->ruc }}</td>
+                                            <td>${{ number_format($proveedor->pivot->precio_costo, 2) }}</td>
                                             <td class="text-center">
                                                 <button type="button"
                                                     class="btn btn-sm btn-danger btnEliminarProveedor">Eliminar</button>
                                             </td>
                                         </tr>
                                         <input type="hidden" name="proveedor_ruc[]" value="{{ $proveedor->ruc }}">
+                                        <input type="hidden" name="precio_costo[]" value="{{ $proveedor->pivot->precio_costo }}">
                                     @endforeach
                                 @endif
                             </tbody>
@@ -301,9 +308,15 @@
                     e.preventDefault();
                     const ruc = selectProveedor.value;
                     const nombre = selectProveedor.options[selectProveedor.selectedIndex].text;
+                    const precioCosto = document.getElementById('precioCostoInput').value;
 
                     if (!ruc) {
                         alert('Selecciona un proveedor');
+                        return;
+                    }
+
+                    if (!precioCosto || parseFloat(precioCosto) <= 0) {
+                        alert('Ingresa un precio de costo válido');
                         return;
                     }
 
@@ -315,22 +328,31 @@
                     const row = document.createElement('tr');
                     row.className = 'proveedor-row';
                     row.dataset.ruc = ruc;
+                    row.dataset.precio = precioCosto;
                     row.innerHTML = `
                     <td>${nombre.split('(')[0].trim()}</td>
                     <td>${ruc}</td>
-                    <td>
+                    <td>$${parseFloat(precioCosto).toFixed(2)}</td>
+                    <td class="text-center">
                         <button type="button" class="btn btn-sm btn-danger btnEliminarProveedor">Eliminar</button>
                     </td>
                 `;
                     tbody.appendChild(row);
 
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'proveedor_ruc[]';
-                    input.value = ruc;
-                    form.appendChild(input);
+                    const inputRuc = document.createElement('input');
+                    inputRuc.type = 'hidden';
+                    inputRuc.name = 'proveedor_ruc[]';
+                    inputRuc.value = ruc;
+                    form.appendChild(inputRuc);
+
+                    const inputPrecio = document.createElement('input');
+                    inputPrecio.type = 'hidden';
+                    inputPrecio.name = 'precio_costo[]';
+                    inputPrecio.value = precioCosto;
+                    form.appendChild(inputPrecio);
 
                     selectProveedor.value = '';
+                    document.getElementById('precioCostoInput').value = '';
                     actualizarSelectProveedores(form);
                 });
                 btnAgregar.dataset.addListener = '1';
@@ -347,8 +369,15 @@
                     if (row) row.remove();
 
                     if (ruc) {
-                        const input = form.querySelector(`input[name="proveedor_ruc[]"][value="${ruc}"]`);
-                        if (input) input.remove();
+                        const inputRuc = form.querySelector(`input[name="proveedor_ruc[]"][value="${ruc}"]`);
+                        if (inputRuc) inputRuc.remove();
+                        
+                        const hiddenRucs = form.querySelectorAll('input[name="proveedor_ruc[]"]');
+                        const index = Array.from(hiddenRucs).findIndex(input => input.value === ruc);
+                        if (index !== -1) {
+                            const inputPrecio = form.querySelectorAll('input[name="precio_costo[]"]')[index];
+                            if (inputPrecio) inputPrecio.remove();
+                        }
                     }
 
                     actualizarSelectProveedores(form);

@@ -38,15 +38,21 @@ class ProductoController extends Controller
     {
         $validated = $request->validated();
 
-        // Separar los RUCs de los proveedores antes de crear el producto
+        // Separar los RUCs de los proveedores y precios de costo antes de crear el producto
         $proveedoresRuc = $validated['proveedor_ruc'] ?? [];
+        $preciosCosto = $validated['precio_costo'] ?? [];
         unset($validated['proveedor_ruc']);
+        unset($validated['precio_costo']);
 
         $producto = Producto::create($validated);
 
-        // Guardar la relación con los proveedores
+        // Guardar la relación con los proveedores junto con el precio de costo
         if (!empty($proveedoresRuc)) {
-            $producto->proveedores()->attach($proveedoresRuc);
+            $proveedoresData = [];
+            foreach ($proveedoresRuc as $index => $ruc) {
+                $proveedoresData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
+            }
+            $producto->proveedores()->attach($proveedoresData);
         }
 
         return redirect()->route('admin.productos')->with('success', 'Producto registrado correctamente');
@@ -86,14 +92,24 @@ class ProductoController extends Controller
     {
         $validated = $request->validated();
 
-        // Separar los RUCs de los proveedores antes de actualizar
+        // Separar los RUCs de los proveedores y precios de costo antes de actualizar
         $proveedoresRuc = $validated['proveedor_ruc'] ?? [];
+        $preciosCosto = $validated['precio_costo'] ?? [];
         unset($validated['proveedor_ruc']);
+        unset($validated['precio_costo']);
 
         $producto->update($validated);
 
-        // Actualizar la relación con los proveedores
-        $producto->proveedores()->sync($proveedoresRuc);
+        // Actualizar la relación con los proveedores junto con el precio de costo
+        if (!empty($proveedoresRuc)) {
+            $proveedoresData = [];
+            foreach ($proveedoresRuc as $index => $ruc) {
+                $proveedoresData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
+            }
+            $producto->proveedores()->sync($proveedoresData);
+        } else {
+            $producto->proveedores()->sync([]);
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
