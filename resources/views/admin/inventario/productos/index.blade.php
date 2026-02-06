@@ -408,6 +408,83 @@
                 window.location.href = url;
             });
 
+            // Ver/Mostrar producto
+            $(document).on('click', '.btnShowProducto', function() {
+                const productoId = $(this).data('id');
+
+                $.ajax({
+                    url: '{{ route("admin.productos.show", ":id") }}'.replace(':id', productoId),
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        // Si es JSON, mostrar en una modal de visualización
+                        if (data.id) {
+                            let proveedoresHtml = '';
+                            if (data.proveedores && data.proveedores.length > 0) {
+                                proveedoresHtml = '<ul>';
+                                data.proveedores.forEach(prov => {
+                                    proveedoresHtml += '<li>' + prov.nombre + ' (Precio costo: $' + parseFloat(prov.pivot.precio_costo).toFixed(2) + ')</li>';
+                                });
+                                proveedoresHtml += '</ul>';
+                            } else {
+                                proveedoresHtml = '<p class="text-muted">Sin proveedores asociados</p>';
+                            }
+
+                            let modal = `
+                                <div class="modal fade" id="modalVerProducto" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-info">
+                                                <h5 class="modal-title">Detalles del Producto</h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <p><strong>Código:</strong> ${data.codigo_barras}</p>
+                                                        <p><strong>Nombre:</strong> ${data.nombre}</p>
+                                                        <p><strong>Marca:</strong> ${data.marca}</p>
+                                                        <p><strong>Categoría:</strong> ${data.categoria ? data.categoria.nombre : 'N/A'}</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <p><strong>Stock Actual:</strong> ${data.cantidad_stock}</p>
+                                                        <p><strong>Stock Mínimo:</strong> ${data.stock_minimo}</p>
+                                                        <p><strong>Stock Máximo:</strong> ${data.stock_maximo}</p>
+                                                        <p><strong>Precio Unitario:</strong> $${parseFloat(data.precio_unitario).toFixed(2)}</p>
+                                                    </div>
+                                                </div>
+                                                <hr>
+                                                <p><strong>Características:</strong></p>
+                                                <p class="text-muted">${data.caracteristicas || 'N/A'}</p>
+                                                <hr>
+                                                <p><strong>Proveedores:</strong></p>
+                                                ${proveedoresHtml}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+
+                            $('body').append(modal);
+                            $('#modalVerProducto').modal('show');
+                            $('#modalVerProducto').on('hidden.bs.modal', function() {
+                                $(this).remove();
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                        console.error('Response:', xhr.responseText);
+                        alert('Error al cargar los detalles del producto');
+                    }
+                });
+            });
+
             // Editar producto
             $(document).on('click', '.btnEditProducto', function() {
                 const productoId = $(this).data('id');
@@ -441,7 +518,7 @@
                 if (confirm('¿Estás seguro de que deseas eliminar el producto "' + productoNombre +
                         '"? Esta acción no se puede deshacer.')) {
                     $.ajax({
-                        url: '/productos/' + productoId,
+                        url: '{{ route("admin.productos.destroy", ":id") }}'.replace(':id', productoId),
                         type: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -451,8 +528,14 @@
                             // Mostrar alerta de éxito
                             alert('Producto eliminado correctamente');
                         },
-                        error: function() {
-                            alert('Error al eliminar el producto');
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            console.error('Response:', xhr.responseText);
+                            let errorMsg = 'Error al eliminar el producto';
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                errorMsg = xhr.responseJSON.error;
+                            }
+                            alert(errorMsg);
                         }
                     });
                 }

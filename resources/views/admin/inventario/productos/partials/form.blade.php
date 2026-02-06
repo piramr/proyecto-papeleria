@@ -280,7 +280,8 @@
         if (select) {
             Array.from(select.options).forEach(option => {
                 if (option.value) {
-                    option.style.display = proveedoresSeleccionados.includes(option.value) ? 'none' : 'block';
+                    // Mostrar todas las opciones, no ocultar las ya seleccionadas
+                    option.style.display = 'block';
                 }
             });
         }
@@ -295,9 +296,18 @@
         forms.forEach(form => {
             const selectProveedor = form.querySelector('#selectProveedor');
             const btnAgregar = form.querySelector('#btnAgregarProveedor');
+            const precioCostoInput = form.querySelector('#precioCostoInput');
             const tabla = form.querySelector('#tablaProveedores');
 
-            if (!tabla || !selectProveedor || !btnAgregar) return;
+            if (!tabla || !selectProveedor || !btnAgregar) {
+                console.warn('Formulario incompleto:', {tabla: !!tabla, selectProveedor: !!selectProveedor, btnAgregar: !!btnAgregar});
+                return;
+            }
+
+            // Si no hay precioCostoInput, lo creamos dinámicamente (para compatibilidad)
+            if (!precioCostoInput) {
+                console.warn('precioCostoInput no encontrado en el formulario');
+            }
 
             const tbody = tabla.querySelector('tbody');
 
@@ -308,7 +318,10 @@
                     e.preventDefault();
                     const ruc = selectProveedor.value;
                     const nombre = selectProveedor.options[selectProveedor.selectedIndex].text;
-                    const precioCosto = document.getElementById('precioCostoInput').value;
+                    
+                    // Obtener el input de precio de forma más robusta
+                    const precioInput = form.querySelector('#precioCostoInput');
+                    const precioCosto = precioInput ? precioInput.value : '';
 
                     if (!ruc) {
                         alert('Selecciona un proveedor');
@@ -320,9 +333,25 @@
                         return;
                     }
 
-                    if (form.querySelector(`[data-ruc="${ruc}"]`)) {
-                        alert('Este proveedor ya está agregado');
-                        return;
+                    // Verificar si el proveedor ya existe y pregunta si desea reemplazarlo
+                    const existingRow = form.querySelector(`[data-ruc="${ruc}"]`);
+                    if (existingRow) {
+                        if (confirm('Este proveedor ya está asociado. ¿Deseas reemplazarlo?')) {
+                            // Remover el proveedor anterior
+                            const oldRuc = existingRow.dataset.ruc;
+                            existingRow.remove();
+                            const inputRuc = form.querySelector(`input[name="proveedor_ruc[]"][value="${oldRuc}"]`);
+                            if (inputRuc) inputRuc.remove();
+                            
+                            const hiddenRucs = form.querySelectorAll('input[name="proveedor_ruc[]"]');
+                            const index = Array.from(hiddenRucs).findIndex(input => input.value === oldRuc);
+                            if (index !== -1) {
+                                const inputPrecio = form.querySelectorAll('input[name="precio_costo[]"]')[index];
+                                if (inputPrecio) inputPrecio.remove();
+                            }
+                        } else {
+                            return;
+                        }
                     }
 
                     const row = document.createElement('tr');
@@ -335,24 +364,14 @@
                     <td>$${parseFloat(precioCosto).toFixed(2)}</td>
                     <td class="text-center">
                         <button type="button" class="btn btn-sm btn-danger btnEliminarProveedor">Eliminar</button>
+                        <input type="hidden" name="proveedor_ruc[]" value="${ruc}">
+                        <input type="hidden" name="precio_costo[]" value="${precioCosto}">
                     </td>
                 `;
                     tbody.appendChild(row);
 
-                    const inputRuc = document.createElement('input');
-                    inputRuc.type = 'hidden';
-                    inputRuc.name = 'proveedor_ruc[]';
-                    inputRuc.value = ruc;
-                    form.appendChild(inputRuc);
-
-                    const inputPrecio = document.createElement('input');
-                    inputPrecio.type = 'hidden';
-                    inputPrecio.name = 'precio_costo[]';
-                    inputPrecio.value = precioCosto;
-                    form.appendChild(inputPrecio);
-
                     selectProveedor.value = '';
-                    document.getElementById('precioCostoInput').value = '';
+                    if (precioInput) precioInput.value = '';
                     actualizarSelectProveedores(form);
                 });
                 btnAgregar.dataset.addListener = '1';
@@ -365,22 +384,11 @@
                     if (!btn) return;
 
                     const row = btn.closest('.proveedor-row');
-                    const ruc = row ? row.dataset.ruc : null;
-                    if (row) row.remove();
-
-                    if (ruc) {
-                        const inputRuc = form.querySelector(`input[name="proveedor_ruc[]"][value="${ruc}"]`);
-                        if (inputRuc) inputRuc.remove();
-                        
-                        const hiddenRucs = form.querySelectorAll('input[name="proveedor_ruc[]"]');
-                        const index = Array.from(hiddenRucs).findIndex(input => input.value === ruc);
-                        if (index !== -1) {
-                            const inputPrecio = form.querySelectorAll('input[name="precio_costo[]"]')[index];
-                            if (inputPrecio) inputPrecio.remove();
-                        }
+                    if (row) {
+                        // Los inputs están dentro de la fila, así que se eliminarán automáticamente
+                        row.remove();
+                        actualizarSelectProveedores(form);
                     }
-
-                    actualizarSelectProveedores(form);
                 });
                 tbody.dataset.deleteListener = '1';
             }

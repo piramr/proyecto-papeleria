@@ -135,6 +135,7 @@ Route::middleware([
     Route::get('/productos/export-pdf', [ProductoController::class, 'exportPdf'])->name('productos.export-pdf');
     Route::get('/productos/export-excel', [ProductoController::class, 'exportExcel'])->name('productos.export-excel');
     Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
+    Route::get('/productos/{producto}', [ProductoController::class, 'show'])->name('productos.show');
     Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
     Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');

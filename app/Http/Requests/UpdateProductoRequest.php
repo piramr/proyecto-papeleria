@@ -14,6 +14,17 @@ class UpdateProductoRequest extends FormRequest {
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void {
+        // Si no hay proveedores, no enviar arrays vacíos
+        if (empty($this->proveedor_ruc)) {
+            $this->request->remove('proveedor_ruc');
+            $this->request->remove('precio_costo');
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
@@ -40,10 +51,10 @@ class UpdateProductoRequest extends FormRequest {
             'en_oferta' => 'nullable|boolean',
             'precio_oferta' => 'required_if:en_oferta,1|numeric|min:0.01|lt:precio_unitario',
             'categoria_id' => 'required|integer|exists:categorias,id',
-            'proveedor_ruc' => 'required|array',
-            'proveedor_ruc.*' => 'string|max:13|exists:proveedores,ruc',
-            'precio_costo' => 'required|array',
-            'precio_costo.*' => 'numeric|min:0.01'
+            'proveedor_ruc' => 'nullable|array',
+            'proveedor_ruc.*' => 'nullable|string|max:13|exists:proveedores,ruc',
+            'precio_costo' => 'nullable|array',
+            'precio_costo.*' => 'nullable|numeric|min:0.01'
         ];
     }
 
