@@ -4,9 +4,11 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CompraController;
+use App\Http\Controllers\AlertasController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VentasController;
+use App\Http\Controllers\Admin\AjusteController;
 use App\Models\Categoria;
 use App\Models\Proveedor;
 
@@ -97,11 +99,17 @@ Route::middleware([
     // APIs auxiliares para ventas
     Route::get('api/productos', [VentasController::class, 'getProductos'])->name('api.productos');
 
+    // ✅ Rutas para alertas
+    Route::get('alertas/stock-bajo', [AlertasController::class, 'stockBajo'])->name('alertas.stock-bajo');
+    Route::get('api/alertas/stock-bajo', [AlertasController::class, 'apiStockBajo'])->name('api.alertas.stock-bajo');
+    Route::get('api/todas-alertas', [AlertasController::class, 'apiTodasAlertas'])->name('api.todas-alertas');
+
     // ===================== SOLO ADMIN =====================
     Route::middleware(['role:Admin'])->group(function () {
         Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
         Route::get('/perfil', fn() => view('admin.perfil.index'))->name('perfil');
-        Route::get('/ajustes', fn() => view('admin.ajustes.index'))->name('ajustes');
+        Route::get('/ajustes', [AjusteController::class, 'index'])->name('ajustes');
+        Route::put('/ajustes', [AjusteController::class, 'update'])->name('ajustes.update');
 
         // Gestión de Usuarios (Exclusivo Admin)
         Route::resource('usuarios', \App\Http\Controllers\Admin\UserController::class);
