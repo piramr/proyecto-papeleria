@@ -36,18 +36,18 @@ class CompraController extends Controller {
      * Store a newly created compra in storage
      */
     public function store(Request $request) {
-        $validated = $request->validate([
-            'proveedor_ruc' => 'required|exists:proveedores,ruc',
-            'fecha_compra' => 'required|date',
-            'tipo_pago_id' => 'required|exists:tipo_pagos,id',
-            'descripcion' => 'nullable|string',
-            'detalles' => 'required|array|min:1',
-            'detalles.*.producto_id' => 'required|exists:productos,id',
-            'detalles.*.cantidad' => 'required|integer|min:1',
-            'detalles.*.precio_unitario' => 'required|numeric|min:0.01',
-        ]);
-
         try {
+            $validated = $request->validate([
+                'proveedor_ruc' => 'required|exists:proveedores,ruc',
+                'fecha_compra' => 'required|date',
+                'tipo_pago_id' => 'required|exists:tipo_pagos,id',
+                'descripcion' => 'nullable|string',
+                'detalles' => 'required|array|min:1',
+                'detalles.*.producto_id' => 'required|exists:productos,id',
+                'detalles.*.cantidad' => 'required|integer|min:1',
+                'detalles.*.precio_unitario' => 'required|numeric|min:0.01',
+            ]);
+
             DB::beginTransaction();
 
             // Validar que todos los productos pertenecen al mismo proveedor
@@ -55,6 +55,9 @@ class CompraController extends Controller {
                 $request->input('proveedor_ruc'),
                 $request->input('detalles')
             );
+
+            // Validar que la cantidad no supere el stock máximo
+            $this->validarStockMaximo($request->input('detalles'));
 
             // Crear compra
             $compra = Compra::create([
@@ -91,7 +94,7 @@ class CompraController extends Controller {
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error al crear la compra: ' . $e->getMessage())
+            return back()->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
     }
@@ -146,6 +149,9 @@ class CompraController extends Controller {
                 $request->input('proveedor_ruc'),
                 $request->input('detalles')
             );
+
+            // Validar que la cantidad no supere el stock máximo
+            $this->validarStockMaximo($request->input('detalles'));
 
             // Actualizar compra
             $compra->update([
@@ -303,6 +309,25 @@ class CompraController extends Controller {
             if (!$existe) {
                 throw new \Exception(
                     "El producto '{$producto->nombre}' no es suministrado por este proveedor."
+                );
+            }
+        }
+    }
+
+    /**
+     * Validar que la cantidad no supere el stock máximo de cada producto
+     */
+    private function validarStockMaximo($detalles) {
+        foreach ($detalles as $detalle) {
+            $producto = Producto::findOrFail($detalle['producto_id']);
+            $cantidadCompra = $detalle['cantidad'];
+            $stockActual = $producto->cantidad_stock;
+            $nuevoStock = $stockActual + $cantidadCompra;
+
+            if ($nuevoStock > $producto->stock_maximo) {
+                throw new \Exception(
+                    "El producto '{$producto->nombre}' no puede tener más de {$producto->stock_maximo} unidades en stock. " .
+                    "Stock actual: {$stockActual}, cantidad a comprar: {$cantidadCompra}, total resultaría en: {$nuevoStock}."
                 );
             }
         }

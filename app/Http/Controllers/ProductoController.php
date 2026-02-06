@@ -63,7 +63,16 @@ class ProductoController extends Controller
      */
     public function show(Producto $producto)
     {
-        //
+        $producto->load(['categoria', 'proveedores']);
+        
+        if (request()->wantsJson() || request()->expectsJson()) {
+            $data = $producto->toArray();
+            // Asegurar que los proveedores incluyen el pivot
+            $data['proveedores'] = $producto->proveedores->toArray();
+            return response()->json($data);
+        }
+
+        return view('admin.inventario.productos.show', compact('producto'));
     }
 
     /**
@@ -71,6 +80,7 @@ class ProductoController extends Controller
      */
     public function edit(Producto $producto)
     {
+        $producto->load('proveedores');
         $categorias = Categoria::all();
         $proveedores = Proveedor::all();
 
@@ -100,15 +110,13 @@ class ProductoController extends Controller
 
         $producto->update($validated);
 
-        // Actualizar la relación con los proveedores junto con el precio de costo
+        // Actualizar la relación con los proveedores solo si se proporciona
         if (!empty($proveedoresRuc)) {
             $proveedoresData = [];
             foreach ($proveedoresRuc as $index => $ruc) {
                 $proveedoresData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
             }
             $producto->proveedores()->sync($proveedoresData);
-        } else {
-            $producto->proveedores()->sync([]);
         }
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -126,14 +134,25 @@ class ProductoController extends Controller
      */
     public function destroy(Producto $producto)
     {
-        $producto->proveedores()->detach();
-        $producto->delete();
+        try {
+            // Eliminar relaciones primero
+            $producto->proveedores()->detach();
+            
+            // Luego eliminar el producto
+            $producto->delete();
 
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json(['message' => 'Producto eliminado correctamente']);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['message' => 'Producto eliminado correctamente']);
+            }
+
+            return redirect()->route('admin.productos')->with('success', 'Producto eliminado correctamente');
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['error' => 'Error al eliminar el producto: ' . $e->getMessage()], 400);
+            }
+            
+            return back()->with('error', 'Error al eliminar el producto: ' . $e->getMessage());
         }
-
-        return redirect()->route('admin.productos')->with('success', 'Producto eliminado correctamente');
     }
 
     public function datatables(Request $request)
