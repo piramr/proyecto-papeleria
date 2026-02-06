@@ -135,10 +135,7 @@ class ProductoController extends Controller
     public function destroy(Producto $producto)
     {
         try {
-            // Eliminar relaciones primero
-            $producto->proveedores()->detach();
-            
-            // Luego eliminar el producto
+            // SoftDelete - no eliminamos las relaciones, solo marcamos como eliminado
             $producto->delete();
 
             if (request()->ajax() || request()->wantsJson()) {
@@ -218,7 +215,7 @@ class ProductoController extends Controller
     }
 
     public function exportPdf(Request $request) {
-        // Construir la consulta base con relaciones
+        // Construir la consulta base con relaciones (solo productos no eliminados)
         $query = \App\Models\Producto::with(['categoria', 'proveedores']);
 
         // Aplicar filtro de categoría si existe
@@ -233,7 +230,7 @@ class ProductoController extends Controller
             });
         }
 
-        // Obtener productos filtrados
+        // Obtener productos filtrados (sin eliminados gracias a SoftDeletes)
         $productos = $query->get();
 
         // Calcular total_vendidos para cada producto
@@ -248,7 +245,7 @@ class ProductoController extends Controller
     }
 
     public function exportExcel(Request $request) {
-        // Construir la consulta base con relaciones
+        // Construir la consulta base con relaciones (solo productos no eliminados)
         $query = \App\Models\Producto::with(['categoria', 'proveedores']);
 
         // Aplicar filtro de categoría si existe
@@ -263,7 +260,7 @@ class ProductoController extends Controller
             });
         }
 
-        // Obtener productos filtrados ordenados por código
+        // Obtener productos filtrados ordenados por código (sin eliminados gracias a SoftDeletes)
         $productos = $query->orderBy('codigo_barras')->get();
 
         // Calcular total_vendidos para cada producto
