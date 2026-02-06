@@ -7,8 +7,10 @@ use App\Models\Factura;
 use App\Models\FacturaDetalle;
 use App\Models\Producto;
 use App\Models\TipoPago;
+use App\Models\Ajuste;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class VentasController extends Controller
@@ -28,9 +30,21 @@ class VentasController extends Controller
             $query->whereDate('fecha_hora', '<=', $request->fecha_hasta);
         }
 
-        // Filtro por cliente
+        // Filtro por cliente (cédula o nombre)
         if ($request->filled('cliente_cedula')) {
-            $query->where('cliente_cedula', 'like', '%' . $request->cliente_cedula . '%');
+            $termino = $request->cliente_cedula;
+            $like = '%' . $termino . '%';
+
+            $query->where(function ($sub) use ($like) {
+                $sub->where('cliente_cedula', 'like', $like)
+                    ->orWhereHas('cliente', function ($cliente) use ($like) {
+                        $cliente->where('cedula', 'like', $like)
+                            ->orWhere('nombres', 'like', $like)
+                            ->orWhere('apellidos', 'like', $like)
+                            ->orWhereRaw("nombres || ' ' || apellidos like ?", [$like])
+                            ->orWhereRaw("apellidos || ' ' || nombres like ?", [$like]);
+                    });
+            });
         }
 
         // Filtro por tipo de pago
@@ -40,7 +54,7 @@ class VentasController extends Controller
 
         // Filtro por número de factura
         if ($request->filled('numero_factura')) {
-            $query->where('id', $request->numero_factura);
+            $query->where('numero_factura', 'like', '%' . $request->numero_factura . '%');
         }
 
         $facturas = $query->orderBy('created_at', 'desc')->paginate(15);
@@ -58,8 +72,16 @@ class VentasController extends Controller
         $clientes = Cliente::all();
         $productos = Producto::where('cantidad_stock', '>', 0)->get();
         $tiposPago = TipoPago::all();
-        
-        return view('admin.ventas.create', compact('clientes', 'productos', 'tiposPago'));
+        $ajuste = Ajuste::getOrCreate();
+        $ivaPorcentaje = $ajuste->iva_porcentaje;
+        $ultimaFactura = Factura::orderBy('created_at', 'desc')->value('numero_factura');
+        $sugerenciaFactura = null;
+        if (!empty($ajuste->prefijo_factura) && !empty($ajuste->siguiente_factura)) {
+            $digitos = $ajuste->secuencial_digitos ?? 9;
+            $sugerenciaFactura = $ajuste->prefijo_factura . str_pad((string) $ajuste->siguiente_factura, $digitos, '0', STR_PAD_LEFT);
+        }
+
+        return view('admin.ventas.create', compact('clientes', 'productos', 'tiposPago', 'ivaPorcentaje', 'ultimaFactura', 'ajuste', 'sugerenciaFactura'));
     }
 
     /**
@@ -67,7 +89,13 @@ class VentasController extends Controller
      */
     public function store(Request $request)
     {
+        Log::info('VentasController@store iniciado', [
+            'user_id' => auth()->id(),
+            'payload' => $request->all(),
+        ]);
+
         $validated = $request->validate([
+            'numero_factura' => 'required|string|unique:facturas|max:20',
             'cliente_cedula' => 'required|string|max:20',
             'cliente_nombres' => 'required|string|max:100',
             'cliente_apellidos' => 'required|string|max:100',
@@ -75,10 +103,33 @@ class VentasController extends Controller
             'cliente_telefono' => 'nullable|string|max:20',
             'cliente_fecha_nacimiento' => 'nullable|date|before:today',
             'tipo_pago_id' => 'required|exists:tipos_pago,id',
+            'consumidor_final' => 'nullable|boolean',
             'productos' => 'required|array',
             'productos.*.id' => 'required|exists:productos,id',
             'productos.*.cantidad' => 'required|integer|min:1',
             'productos.*.precio' => 'required|numeric|min:0',
+        ], [
+            'numero_factura.required' => 'El número de factura es obligatorio.',
+            'numero_factura.unique' => 'El número de factura ya está registrado.',
+            'numero_factura.max' => 'El número de factura no debe superar 20 caracteres.',
+            'cliente_cedula.required' => 'La cédula es obligatoria.',
+            'cliente_nombres.required' => 'Los nombres son obligatorios.',
+            'cliente_apellidos.required' => 'Los apellidos son obligatorios.',
+            'cliente_email.email' => 'El correo electrónico no es válido.',
+            'cliente_fecha_nacimiento.date' => 'La fecha de nacimiento no es válida.',
+            'cliente_fecha_nacimiento.before' => 'La fecha de nacimiento debe ser anterior a hoy.',
+            'tipo_pago_id.required' => 'El tipo de pago es obligatorio.',
+            'tipo_pago_id.exists' => 'El tipo de pago seleccionado no es válido.',
+            'productos.required' => 'Debes agregar al menos un producto.',
+            'productos.array' => 'El listado de productos no es válido.',
+            'productos.*.id.required' => 'Selecciona un producto válido.',
+            'productos.*.id.exists' => 'El producto seleccionado no existe.',
+            'productos.*.cantidad.required' => 'La cantidad es obligatoria.',
+            'productos.*.cantidad.integer' => 'La cantidad debe ser un número entero.',
+            'productos.*.cantidad.min' => 'La cantidad debe ser al menos 1.',
+            'productos.*.precio.required' => 'El precio es obligatorio.',
+            'productos.*.precio.numeric' => 'El precio debe ser numérico.',
+            'productos.*.precio.min' => 'El precio no puede ser negativo.',
         ]);
 
         try {
@@ -89,6 +140,7 @@ class VentasController extends Controller
                 $edad = Carbon::parse($validated['cliente_fecha_nacimiento'])->age;
                 $esMenor = $edad < 18;
             }
+            $usarConsumidorFinal = $request->boolean('consumidor_final');
 
             // Cliente “Consumidor Final” para facturar a menores
             $consumidorFinalCedula = '9999999999';
@@ -99,13 +151,37 @@ class VentasController extends Controller
                 'telefono' => null,
             ];
 
+            $warnings = [];
+
             // Crear o actualizar cliente según edad
-            if ($esMenor) {
+            if ($esMenor || $usarConsumidorFinal) {
                 $cliente = Cliente::firstOrCreate(
                     ['cedula' => $consumidorFinalCedula],
                     $consumidorFinalDatos
                 );
             } else {
+                $telefono = $validated['cliente_telefono'] ?? null;
+                if (!empty($telefono)) {
+                    $telefonoEnUso = Cliente::where('telefono', $telefono)
+                        ->where('cedula', '!=', $validated['cliente_cedula'])
+                        ->exists();
+                    if ($telefonoEnUso) {
+                        $validated['cliente_telefono'] = null;
+                        $warnings[] = 'El teléfono ya está registrado en otro cliente. Se omitió en esta venta.';
+                    }
+                }
+
+                $email = $validated['cliente_email'] ?? null;
+                if (!empty($email)) {
+                    $emailEnUso = Cliente::where('email', $email)
+                        ->where('cedula', '!=', $validated['cliente_cedula'])
+                        ->exists();
+                    if ($emailEnUso) {
+                        $validated['cliente_email'] = null;
+                        $warnings[] = 'El correo ya está registrado en otro cliente. Se omitió en esta venta.';
+                    }
+                }
+
                 $cliente = Cliente::updateOrCreate(
                     ['cedula' => $validated['cliente_cedula']],
                     [
@@ -124,17 +200,32 @@ class VentasController extends Controller
                 $subtotal += $item['cantidad'] * $item['precio'];
             }
 
-            $total = $subtotal;
+            // Calcular IVA desde ajustes
+            $ajuste = Ajuste::getOrCreate();
+            $ivaPorcentaje = $ajuste->iva_porcentaje;
+            $iva = $subtotal * ($ivaPorcentaje / 100);
+            $total = $subtotal + $iva;
 
             // Crear factura
             $factura = Factura::create([
+                'numero_factura' => $validated['numero_factura'],
                 'fecha_hora' => now(),
                 'cliente_cedula' => $cliente->cedula,
                 'usuario_id' => auth()->id(),
                 'tipo_pago_id' => $validated['tipo_pago_id'],
                 'subtotal' => $subtotal,
+                'iva' => $iva,
+                'iva_porcentaje' => $ivaPorcentaje,
                 'total' => $total,
             ]);
+
+            if (!empty($ajuste->prefijo_factura) && !empty($ajuste->siguiente_factura)) {
+                $digitos = $ajuste->secuencial_digitos ?? 9;
+                $sugerenciaFactura = $ajuste->prefijo_factura . str_pad((string) $ajuste->siguiente_factura, $digitos, '0', STR_PAD_LEFT);
+                if ($validated['numero_factura'] === $sugerenciaFactura) {
+                    $ajuste->update(['siguiente_factura' => $ajuste->siguiente_factura + 1]);
+                }
+            }
 
             // Crear detalles de factura y actualizar stock
             foreach ($validated['productos'] as $item) {
@@ -143,7 +234,7 @@ class VentasController extends Controller
                     'producto_id' => $item['id'],
                     'cantidad' => $item['cantidad'],
                     'precio_unitario' => $item['precio'],
-                    'subtotal' => $item['cantidad'] * $item['precio'],
+                    'total' => $item['cantidad'] * $item['precio'],
                 ]);
 
                 // Restar del stock
@@ -153,11 +244,21 @@ class VentasController extends Controller
 
             DB::commit();
             
-            return redirect()->route('ventas.show', $factura->id)
-                ->with('success', 'Venta registrada correctamente. Factura #' . $factura->id);
+            $redirect = redirect()->route('admin.ventas.show', $factura->id)
+                ->with('success', 'Venta registrada correctamente. Factura #' . $factura->numero_factura);
+
+            if (!empty($warnings)) {
+                $redirect->with('warning', implode(' ', $warnings));
+            }
+
+            return $redirect;
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error al procesar venta', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return back()->with('error', 'Error al procesar la venta: ' . $e->getMessage());
         }
     }
@@ -168,7 +269,8 @@ class VentasController extends Controller
     public function show(Factura $factura)
     {
         $factura->load('cliente', 'tipoPago', 'detalles.producto');
-        return view('admin.ventas.show', compact('factura'));
+        $ajuste = Ajuste::getOrCreate();
+        return view('admin.ventas.show', compact('factura', 'ajuste'));
     }
 
     /**
@@ -177,7 +279,8 @@ class VentasController extends Controller
     public function print(Factura $factura)
     {
         $factura->load('cliente', 'tipoPago', 'detalles.producto');
-        return view('admin.ventas.print', compact('factura'));
+        $ajuste = Ajuste::getOrCreate();
+        return view('admin.ventas.print', compact('factura', 'ajuste'));
     }
 
     /**
@@ -230,10 +333,35 @@ class VentasController extends Controller
             $factura->detalles()->delete();
             $factura->delete();
 
+            // Recalcular siguiente secuencial si aplica
+            $ajuste = Ajuste::getOrCreate();
+            if (!empty($ajuste->prefijo_factura) && !empty($ajuste->secuencial_digitos)) {
+                $prefijo = $ajuste->prefijo_factura;
+                $digitos = (int) ($ajuste->secuencial_digitos ?? 9);
+
+                $numeros = Factura::where('numero_factura', 'like', $prefijo . '%')
+                    ->pluck('numero_factura');
+
+                $max = 0;
+                foreach ($numeros as $numero) {
+                    if (str_starts_with($numero, $prefijo)) {
+                        $secuencial = substr($numero, strlen($prefijo));
+                        if (ctype_digit($secuencial)) {
+                            $valor = (int) $secuencial;
+                            if ($valor > $max) {
+                                $max = $valor;
+                            }
+                        }
+                    }
+                }
+
+                $ajuste->update(['siguiente_factura' => $max > 0 ? $max + 1 : 1]);
+            }
+
             DB::commit();
 
-            return redirect()->route('ventas.index')
-                ->with('success', 'Factura #' . $factura->id . ' anulada correctamente. Stock restaurado.');
+            return redirect()->route('admin.ventas.index')
+                ->with('success', 'Factura #' . $factura->numero_factura . ' anulada correctamente. Stock restaurado.');
 
         } catch (\Exception $e) {
             DB::rollBack();
