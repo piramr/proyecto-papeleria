@@ -2,132 +2,164 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+        @php
+            $monedaSimbolo = $ajuste->moneda_simbolo ?? '$';
+            $monedaDecimales = $ajuste->moneda_decimales ?? 2;
+        @endphp
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Factura #{{ $factura->id }}</title>
+    <title>Factura #{{ $factura->numero_factura }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+                @if(!empty($ajuste->logo_url))
+                    <img src="{{ $ajuste->logo_url }}" alt="Logo" style="max-height: 55px;" class="mb-1">
+                @endif
+                <h5>{{ $ajuste->empresa_nombre ?? 'Empresa' }}</h5>
+                @if(!empty($ajuste->empresa_ruc))
+                    <p class="mb-1">RUC/Cédula: {{ $ajuste->empresa_ruc }}</p>
+                @endif
+                @if(!empty($ajuste->empresa_direccion))
+                    <p class="mb-1">Dirección: {{ $ajuste->empresa_direccion }}</p>
+                @endif
+                <p class="mb-0">
+                    @if(!empty($ajuste->empresa_telefono))
+                        Teléfono: {{ $ajuste->empresa_telefono }}
+                    @endif
+                    @if(!empty($ajuste->empresa_email))
+                        | Email: {{ $ajuste->empresa_email }}
+                    @endif
+                </p>
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f8f9fa;
         }
         .factura-container {
             max-width: 900px;
-            margin: 20px auto;
+            margin: 10px auto;
             background-color: white;
-            padding: 40px;
+            padding: 15px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .factura-header {
             text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 3px solid #333;
-            padding-bottom: 20px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 8px;
         }
         .factura-header h1 {
             margin: 0;
-            font-size: 48px;
+            font-size: 36px;
             font-weight: bold;
         }
         .empresa-info {
-            margin-top: 20px;
-            font-size: 14px;
+            margin-top: 5px;
+            font-size: 11px;
+            line-height: 1.3;
         }
         .factura-numero {
             display: flex;
             justify-content: space-between;
-            margin: 20px 0;
-            font-size: 14px;
+            margin: 8px 0;
+            font-size: 12px;
         }
         .seccion {
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
         .seccion-titulo {
             font-weight: bold;
-            font-size: 13px;
+            font-size: 11px;
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
             text-transform: uppercase;
         }
         .seccion-contenido {
-            font-size: 14px;
-            line-height: 1.8;
+            font-size: 12px;
+            line-height: 1.4;
         }
         .tabla-productos {
             width: 100%;
-            margin: 30px 0;
+            margin: 8px 0;
             border-collapse: collapse;
         }
         .tabla-productos thead {
             background-color: #f0f0f0;
-            border-top: 2px solid #333;
-            border-bottom: 2px solid #333;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
         }
         .tabla-productos th {
-            padding: 12px;
+            padding: 5px 8px;
             text-align: left;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 11px;
         }
         .tabla-productos td {
-            padding: 10px 12px;
+            padding: 4px 8px;
             border-bottom: 1px solid #ddd;
-            font-size: 13px;
+            font-size: 11px;
         }
         .tabla-productos .numero {
             text-align: right;
         }
         .totales {
-            margin: 30px 0;
+            margin: 8px 0;
             float: right;
-            width: 300px;
+            width: 250px;
         }
         .totales-tabla {
             width: 100%;
             border-collapse: collapse;
         }
         .totales-tabla tr {
-            height: 25px;
+            height: 18px;
         }
         .totales-tabla td:first-child {
             text-align: right;
-            padding-right: 20px;
-            font-size: 13px;
+            padding-right: 15px;
+            font-size: 12px;
         }
         .totales-tabla td:last-child {
             text-align: right;
-            font-size: 13px;
+            font-size: 12px;
         }
         .totales-tabla .total {
             font-weight: bold;
-            font-size: 16px;
-            border-top: 2px solid #333;
-            border-bottom: 2px solid #333;
-            padding: 10px 0;
+            font-size: 14px;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
+            padding: 5px 0;
         }
         .pie-factura {
             clear: both;
             text-align: center;
-            margin-top: 60px;
-            padding-top: 20px;
+            margin-top: 15px;
+            padding-top: 10px;
             border-top: 1px solid #ddd;
-            font-size: 12px;
+            font-size: 10px;
             color: #666;
+            line-height: 1.3;
         }
         .footer-text {
-            margin-top: 10px;
+            margin-top: 5px;
             font-style: italic;
         }
         @media print {
             body {
                 background-color: white;
+                margin: 0;
+                padding: 0;
             }
             .factura-container {
                 box-shadow: none;
                 margin: 0;
-                padding: 0;
+                padding: 10px;
+                page-break-after: avoid;
             }
             .no-print {
                 display: none !important;
+            }
+            html, body {
+                height: 100%;
+            }
+        }
             }
         }
         .btn-print {
@@ -146,24 +178,42 @@
     </div>
 
     <div class="factura-container">
+        @php
+            $monedaSimbolo = $ajuste->moneda_simbolo ?? '$';
+            $monedaDecimales = $ajuste->moneda_decimales ?? 2;
+        @endphp
         <!-- Encabezado -->
         <div class="factura-header">
             <h1>FACTURA</h1>
             <div class="empresa-info">
-                <h5>Papelería XYZ</h5>
-                <p class="mb-1">RUC/Cédula: XXXXXXXXXXXXX</p>
-                <p class="mb-1">Dirección: Calle Principal, Local 123</p>
-                <p class="mb-0">Teléfono: +58 XXX-XXXX-XX | Email: info@papeleria.com</p>
+                @if(!empty($ajuste->logo_url))
+                    <img src="{{ $ajuste->logo_url }}" alt="Logo" style="max-height: 55px; margin-bottom: 5px;">
+                @endif
+                <h5 style="margin: 2px 0;">{{ $ajuste->empresa_nombre ?? 'Empresa' }}</h5>
+                @if(!empty($ajuste->empresa_ruc))
+                    <p style="margin: 2px 0;">RUC/Cédula: {{ $ajuste->empresa_ruc }}</p>
+                @endif
+                @if(!empty($ajuste->empresa_direccion))
+                    <p style="margin: 2px 0;">Dirección: {{ $ajuste->empresa_direccion }}</p>
+                @endif
+                <p style="margin: 0;">
+                    @if(!empty($ajuste->empresa_telefono))
+                        Teléfono: {{ $ajuste->empresa_telefono }}
+                    @endif
+                    @if(!empty($ajuste->empresa_email))
+                        @if(!empty($ajuste->empresa_telefono)) | @endif Email: {{ $ajuste->empresa_email }}
+                    @endif
+                </p>
             </div>
         </div>
 
         <!-- Número de Factura y Fecha -->
         <div class="factura-numero">
             <div>
-                <strong>Factura #:</strong> {{ $factura->id }}
+                <strong>Factura #:</strong> {{ $factura->numero_factura }}
             </div>
             <div>
-                <strong>Fecha:</strong> {{ $factura->fecha_hora->format('d/m/Y H:i') }}
+                <strong>Fecha:</strong> {{ \Carbon\Carbon::parse($factura->fecha_hora)->format('d/m/Y H:i') }}
             </div>
         </div>
 
@@ -205,8 +255,8 @@
                     <tr>
                         <td>{{ $detalle->producto->nombre }}</td>
                         <td class="numero">{{ $detalle->cantidad }}</td>
-                        <td class="numero">${{ number_format($detalle->precio_unitario, 2) }}</td>
-                        <td class="numero">${{ number_format($detalle->subtotal, 2) }}</td>
+                        <td class="numero">{{ $monedaSimbolo }}{{ number_format($detalle->precio_unitario, $monedaDecimales) }}</td>
+                        <td class="numero">{{ $monedaSimbolo }}{{ number_format($detalle->subtotal, $monedaDecimales) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -214,14 +264,24 @@
 
         <!-- Totales -->
         <div class="totales">
+            @php
+                $ivaPorcentaje = $factura->iva_porcentaje;
+                if ($ivaPorcentaje === null && $factura->subtotal > 0) {
+                    $ivaPorcentaje = round(($factura->iva / $factura->subtotal) * 100, 2);
+                }
+            @endphp
             <table class="totales-tabla">
                 <tr>
                     <td>Subtotal:</td>
-                    <td>${{ number_format($factura->subtotal, 2) }}</td>
+                    <td>{{ $monedaSimbolo }}{{ number_format($factura->subtotal, $monedaDecimales) }}</td>
+                </tr>
+                <tr>
+                    <td>IVA ({{ number_format($ivaPorcentaje ?? 0, 2, '.', '') }}%):</td>
+                    <td>{{ $monedaSimbolo }}{{ number_format($factura->iva, $monedaDecimales) }}</td>
                 </tr>
                 <tr class="total">
                     <td>TOTAL:</td>
-                    <td>${{ number_format($factura->total, 2) }}</td>
+                    <td>{{ $monedaSimbolo }}{{ number_format($factura->total, $monedaDecimales) }}</td>
                 </tr>
             </table>
         </div>
@@ -230,10 +290,15 @@
         <div class="pie-factura">
             <p><strong>¡GRACIAS POR SU COMPRA!</strong></p>
             <div class="footer-text">
-                <p>Esta factura es válida como comprobante de pago y debe ser conservada por el cliente.</p>
-                <p>Para consultas, contacte a nuestro servicio al cliente.</p>
+                <p>{{ $ajuste->pie_factura ?? 'Esta factura es válida como comprobante de pago y debe ser conservada por el cliente.' }}</p>
             </div>
         </div>
     </div>
 </body>
 </html>
+
+@if(request()->boolean('autoprint'))
+<script>
+    window.print();
+</script>
+@endif
