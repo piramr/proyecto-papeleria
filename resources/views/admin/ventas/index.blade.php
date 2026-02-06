@@ -5,6 +5,30 @@
 @stop
 
 @section('content')
+    <style>
+        .btn-action-square {
+            width: 34px;
+            height: 34px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px !important;
+        }
+
+        .btn-group.action-buttons {
+            gap: 6px;
+        }
+
+        .btn-group.action-buttons > .btn,
+        .btn-group.action-buttons > .btn-group {
+            margin-left: 0 !important;
+        }
+
+        .btn-group.action-buttons > .btn-action-square {
+            border-radius: 6px !important;
+        }
+    </style>
 <div class="container-fluid">
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -196,10 +220,10 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                <div class="btn-group btn-group-sm" role="group">
+                                <div class="btn-group btn-group-sm action-buttons" role="group">
                                     <!-- Ver Detalle -->
-                                    <a href="{{ route('admin.ventas.show', $factura->id) }}" 
-                                       class="btn btn-outline-primary" 
+                                                <a href="{{ route('admin.ventas.show', $factura->id) }}" 
+                                                    class="btn btn-outline-primary btn-action-square" 
                                        title="Ver detalle de la factura"
                                        data-bs-toggle="tooltip"
                                        data-bs-placement="top">
@@ -207,8 +231,8 @@
                                     </a>
                                     
                                     <!-- Imprimir / PDF -->
-                                    <a href="{{ route('admin.ventas.print', $factura->id) }}" 
-                                       class="btn btn-outline-warning" 
+                                                <a href="{{ route('admin.ventas.print', $factura->id) }}" 
+                                                    class="btn btn-outline-warning btn-action-square" 
                                        title="Imprimir o descargar PDF"
                                        data-bs-toggle="tooltip"
                                        data-bs-placement="top"
@@ -224,7 +248,7 @@
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" 
-                                                class="btn btn-outline-danger" 
+                                            class="btn btn-outline-danger btn-action-square" 
                                                 title="Anular factura"
                                                 data-bs-toggle="tooltip"
                                                 data-bs-placement="top">

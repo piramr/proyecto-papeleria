@@ -2,14 +2,32 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+        @php
+            $monedaSimbolo = $ajuste->moneda_simbolo ?? '$';
+            $monedaDecimales = $ajuste->moneda_decimales ?? 2;
+        @endphp
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Factura #{{ $factura->numero_factura }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-        }
+                @if(!empty($ajuste->logo_url))
+                    <img src="{{ $ajuste->logo_url }}" alt="Logo" style="max-height: 55px;" class="mb-1">
+                @endif
+                <h5>{{ $ajuste->empresa_nombre ?? 'Empresa' }}</h5>
+                @if(!empty($ajuste->empresa_ruc))
+                    <p class="mb-1">RUC/Cédula: {{ $ajuste->empresa_ruc }}</p>
+                @endif
+                @if(!empty($ajuste->empresa_direccion))
+                    <p class="mb-1">Dirección: {{ $ajuste->empresa_direccion }}</p>
+                @endif
+                <p class="mb-0">
+                    @if(!empty($ajuste->empresa_telefono))
+                        Teléfono: {{ $ajuste->empresa_telefono }}
+                    @endif
+                    @if(!empty($ajuste->empresa_email))
+                        | Email: {{ $ajuste->empresa_email }}
+                    @endif
+                </p>
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f8f9fa;
@@ -160,14 +178,32 @@
     </div>
 
     <div class="factura-container">
+        @php
+            $monedaSimbolo = $ajuste->moneda_simbolo ?? '$';
+            $monedaDecimales = $ajuste->moneda_decimales ?? 2;
+        @endphp
         <!-- Encabezado -->
         <div class="factura-header">
             <h1>FACTURA</h1>
             <div class="empresa-info">
-                <h5>Papelería XYZ</h5>
-                <p class="mb-1">RUC/Cédula: XXXXXXXXXXXXX</p>
-                <p class="mb-1">Dirección: Calle Principal, Local 123</p>
-                <p class="mb-0">Teléfono: +58 XXX-XXXX-XX | Email: info@papeleria.com</p>
+                @if(!empty($ajuste->logo_url))
+                    <img src="{{ $ajuste->logo_url }}" alt="Logo" style="max-height: 55px; margin-bottom: 5px;">
+                @endif
+                <h5 style="margin: 2px 0;">{{ $ajuste->empresa_nombre ?? 'Empresa' }}</h5>
+                @if(!empty($ajuste->empresa_ruc))
+                    <p style="margin: 2px 0;">RUC/Cédula: {{ $ajuste->empresa_ruc }}</p>
+                @endif
+                @if(!empty($ajuste->empresa_direccion))
+                    <p style="margin: 2px 0;">Dirección: {{ $ajuste->empresa_direccion }}</p>
+                @endif
+                <p style="margin: 0;">
+                    @if(!empty($ajuste->empresa_telefono))
+                        Teléfono: {{ $ajuste->empresa_telefono }}
+                    @endif
+                    @if(!empty($ajuste->empresa_email))
+                        @if(!empty($ajuste->empresa_telefono)) | @endif Email: {{ $ajuste->empresa_email }}
+                    @endif
+                </p>
             </div>
         </div>
 
@@ -219,8 +255,8 @@
                     <tr>
                         <td>{{ $detalle->producto->nombre }}</td>
                         <td class="numero">{{ $detalle->cantidad }}</td>
-                        <td class="numero">${{ number_format($detalle->precio_unitario, 2) }}</td>
-                        <td class="numero">${{ number_format($detalle->subtotal, 2) }}</td>
+                        <td class="numero">{{ $monedaSimbolo }}{{ number_format($detalle->precio_unitario, $monedaDecimales) }}</td>
+                        <td class="numero">{{ $monedaSimbolo }}{{ number_format($detalle->subtotal, $monedaDecimales) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -228,18 +264,24 @@
 
         <!-- Totales -->
         <div class="totales">
+            @php
+                $ivaPorcentaje = $factura->iva_porcentaje;
+                if ($ivaPorcentaje === null && $factura->subtotal > 0) {
+                    $ivaPorcentaje = round(($factura->iva / $factura->subtotal) * 100, 2);
+                }
+            @endphp
             <table class="totales-tabla">
                 <tr>
                     <td>Subtotal:</td>
-                    <td>${{ number_format($factura->subtotal, 2) }}</td>
+                    <td>{{ $monedaSimbolo }}{{ number_format($factura->subtotal, $monedaDecimales) }}</td>
                 </tr>
                 <tr>
-                    <td>IVA (15%):</td>
-                    <td>${{ number_format($factura->iva, 2) }}</td>
+                    <td>IVA ({{ number_format($ivaPorcentaje ?? 0, 2, '.', '') }}%):</td>
+                    <td>{{ $monedaSimbolo }}{{ number_format($factura->iva, $monedaDecimales) }}</td>
                 </tr>
                 <tr class="total">
                     <td>TOTAL:</td>
-                    <td>${{ number_format($factura->total, 2) }}</td>
+                    <td>{{ $monedaSimbolo }}{{ number_format($factura->total, $monedaDecimales) }}</td>
                 </tr>
             </table>
         </div>
@@ -248,10 +290,15 @@
         <div class="pie-factura">
             <p><strong>¡GRACIAS POR SU COMPRA!</strong></p>
             <div class="footer-text">
-                <p>Esta factura es válida como comprobante de pago y debe ser conservada por el cliente.</p>
-                <p>Para consultas, contacte a nuestro servicio al cliente.</p>
+                <p>{{ $ajuste->pie_factura ?? 'Esta factura es válida como comprobante de pago y debe ser conservada por el cliente.' }}</p>
             </div>
         </div>
     </div>
 </body>
 </html>
+
+@if(request()->boolean('autoprint'))
+<script>
+    window.print();
+</script>
+@endif

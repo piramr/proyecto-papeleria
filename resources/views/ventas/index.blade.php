@@ -86,7 +86,7 @@
                 </div>
 
                 <!-- Cliente -->
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label for="cliente_cedula" class="form-label small fw-semibold">👤 Cliente</label>
                     <input type="text" class="form-control form-control-sm" id="cliente_cedula" name="cliente_cedula" 
                            placeholder="Cédula o nombre..." value="{{ request('cliente_cedula') }}">
@@ -106,10 +106,10 @@
                 </div>
 
                 <!-- Nº Factura -->
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <label for="numero_factura" class="form-label small fw-semibold">🔢 Fact.</label>
-                    <input type="number" class="form-control form-control-sm" id="numero_factura" name="numero_factura" 
-                           placeholder="#" value="{{ request('numero_factura') }}">
+                    <input type="text" class="form-control form-control-sm" id="numero_factura" name="numero_factura" 
+                           placeholder="001-001-000000001" value="{{ request('numero_factura') }}">
                 </div>
 
                 <!-- Botón Buscar -->

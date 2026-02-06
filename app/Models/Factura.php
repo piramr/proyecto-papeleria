@@ -14,6 +14,7 @@ class Factura extends Model {
         'descripcion',
         'subtotal',
         'iva',
+        'iva_porcentaje',
         'total',
         'cliente_cedula',
         'usuario_id',
