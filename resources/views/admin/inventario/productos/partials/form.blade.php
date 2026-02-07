@@ -182,7 +182,7 @@
                 <p class="card-header h5">Proveedores</p>
                 <div class="card-body">
                     <div class="row align-items-end mb-4">
-                        <div class="form-group col-md-4 mb-0">
+                        <div class="form-group col-md-3 mb-0">
                             <select class="form-control" id="selectProveedor">
                                 <option value="">-- Seleccione proveedor --</option>
                                 @foreach ($proveedores as $proveedor)
@@ -191,10 +191,6 @@
                                     </option>
                                 @endforeach
                             </select>
-                        </div>
-                        <div class="form-group col-md-3 mb-0">
-                            <label for="precioCostoInput" class="mb-1 small">Precio de costo</label>
-                            <input type="number" step="0.01" min="0" class="form-control" id="precioCostoInput" placeholder="0.00">
                         </div>
                         <div class="col-md-2">
                             <button type="button" id="btnAgregarProveedor"
@@ -208,30 +204,75 @@
                                 <tr>
                                     <th>Proveedor</th>
                                     <th>RUC</th>
-                                    <th>Precio de costo</th>
+                                    <th width="200px">Precio Costo</th>
                                     <th width="100px" class="text-center">Acción</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if (isset($producto) && $producto->proveedores->count() > 0)
-                                    @foreach ($producto->proveedores as $proveedor)
-                                        <tr class="proveedor-row" data-ruc="{{ $proveedor->ruc }}" data-precio="{{ $proveedor->pivot->precio_costo }}">
+                                    @foreach ($producto->proveedores as $index => $proveedor)
+                                        <tr class="proveedor-row" data-ruc="{{ $proveedor->ruc }}" data-precio="{{ $proveedor->pivot->precio_costo ?? 0 }}">
                                             <td>{{ $proveedor->nombre }}</td>
                                             <td>{{ $proveedor->ruc }}</td>
-                                            <td>${{ number_format($proveedor->pivot->precio_costo, 2) }}</td>
+                                            <td>
+                                                <div class="input-group input-group-sm">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">$</span>
+                                                    </div>
+                                                    <input type="number" step="0.01" class="form-control precioCostoRow @error('precioCosto.'.$index) is-invalid @enderror" 
+                                                        name="precioCosto[]" value="{{ $proveedor->pivot->precio_costo ?? 0 }}">
+                                                </div>
+                                                @error('precioCosto.'.$index)
+                                                    <small class="text-danger">{{ $message }}</small>
+                                                @enderror
+                                            </td>
                                             <td class="text-center">
                                                 <button type="button"
                                                     class="btn btn-sm btn-danger btnEliminarProveedor">Eliminar</button>
+                                                <input type="hidden" name="proveedor_ruc[]" value="{{ $proveedor->ruc }}">
+                                                <input type="hidden" name="precio_costo[]" value="{{ $proveedor->pivot->precio_costo }}">
                                             </td>
                                         </tr>
-                                        <input type="hidden" name="proveedor_ruc[]" value="{{ $proveedor->ruc }}">
-                                        <input type="hidden" name="precio_costo[]" value="{{ $proveedor->pivot->precio_costo }}">
+                                    @endforeach
+                                @elseif (old('proveedor_ruc'))
+                                    @php
+                                        $oldProveedoresRuc = old('proveedor_ruc', []);
+                                        $oldPreciosCosto = old('precioCosto', []);
+                                    @endphp
+                                    @foreach ($oldProveedoresRuc as $index => $ruc)
+                                        @php
+                                            $proveedor = $proveedores->firstWhere('ruc', $ruc);
+                                        @endphp
+                                        @if ($proveedor)
+                                            <tr class="proveedor-row" data-ruc="{{ $ruc }}" data-precio="{{ $oldPreciosCosto[$index] ?? 0 }}">
+                                                <td>{{ $proveedor->nombre }}</td>
+                                                <td>{{ $ruc }}</td>
+                                                <td>
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text">$</span>
+                                                        </div>
+                                                        <input type="number" step="0.01" class="form-control precioCostoRow @error('precioCosto.'.$index) is-invalid @enderror" 
+                                                            name="precioCosto[]" value="{{ $oldPreciosCosto[$index] ?? 0 }}">
+                                                    </div>
+                                                    @error('precioCosto.'.$index)
+                                                        <small class="text-danger">{{ $message }}</small>
+                                                    @enderror
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger btnEliminarProveedor">Eliminar</button>
+                                                    <input type="hidden" name="proveedor_ruc[]" value="{{ $ruc }}">
+                                                    <input type="hidden" name="precio_costo[]" value="{{ $oldPreciosCosto[$index] ?? 0 }}">
+                                                </td>
+                                            </tr>
+                                        @endif
                                     @endforeach
                                 @endif
                             </tbody>
                         </table>
                         @error('proveedor_ruc')
-                            <span class="text-danger small font-italic">{{ $message }}</span>
+                            <span class="text-danger small font-italic d-block">{{ $message }}</span>
                         @enderror
                     </div>
                 </div>
@@ -328,11 +369,6 @@
                         return;
                     }
 
-                    if (!precioCosto || parseFloat(precioCosto) <= 0) {
-                        alert('Ingresa un precio de costo válido');
-                        return;
-                    }
-
                     // Verificar si el proveedor ya existe y pregunta si desea reemplazarlo
                     const existingRow = form.querySelector(`[data-ruc="${ruc}"]`);
                     if (existingRow) {
@@ -361,13 +397,33 @@
                     row.innerHTML = `
                     <td>${nombre.split('(')[0].trim()}</td>
                     <td>${ruc}</td>
-                    <td>$${parseFloat(precioCosto).toFixed(2)}</td>
+                    <td>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            <input type="number" step="0.01" class="form-control precioCostoRow" 
+                                name="precioCosto[]" value="0" placeholder="Ingrese precio">
+                        </div>
+                    </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-sm btn-danger btnEliminarProveedor">Eliminar</button>
-                        <input type="hidden" name="proveedor_ruc[]" value="${ruc}">
-                        <input type="hidden" name="precio_costo[]" value="${precioCosto}">
                     </td>
                 `;
+                    
+                    // Agregar los inputs ocultos dentro de la última celda para que se eliminen con la fila
+                    const lastTd = row.querySelector('td:last-child');
+                    const hiddenRuc = document.createElement('input');
+                    hiddenRuc.type = 'hidden';
+                    hiddenRuc.name = 'proveedor_ruc[]';
+                    hiddenRuc.value = ruc;
+                    lastTd.appendChild(hiddenRuc);
+                    
+                    const hiddenPrecio = document.createElement('input');
+                    hiddenPrecio.type = 'hidden';
+                    hiddenPrecio.name = 'precio_costo[]';
+                    hiddenPrecio.value = precioCosto;
+                    lastTd.appendChild(hiddenPrecio);
                     tbody.appendChild(row);
 
                     selectProveedor.value = '';

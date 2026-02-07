@@ -38,21 +38,20 @@ class ProductoController extends Controller
     {
         $validated = $request->validated();
 
-        // Separar los RUCs de los proveedores y precios de costo antes de crear el producto
+        // Separar los RUCs de los proveedores y precios antes de crear el producto
         $proveedoresRuc = $validated['proveedor_ruc'] ?? [];
-        $preciosCosto = $validated['precio_costo'] ?? [];
-        unset($validated['proveedor_ruc']);
-        unset($validated['precio_costo']);
+        $preciosCosto = $validated['precioCosto'] ?? [];
+        unset($validated['proveedor_ruc'], $validated['precioCosto']);
 
         $producto = Producto::create($validated);
 
-        // Guardar la relación con los proveedores junto con el precio de costo
+        // Guardar la relación con los proveedores incluyendo precio_costo
         if (!empty($proveedoresRuc)) {
-            $proveedoresData = [];
+            $pivotData = [];
             foreach ($proveedoresRuc as $index => $ruc) {
-                $proveedoresData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
+                $pivotData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
             }
-            $producto->proveedores()->attach($proveedoresData);
+            $producto->proveedores()->attach($pivotData);
         }
 
         return redirect()->route('admin.productos')->with('success', 'Producto registrado correctamente');
@@ -102,22 +101,19 @@ class ProductoController extends Controller
     {
         $validated = $request->validated();
 
-        // Separar los RUCs de los proveedores y precios de costo antes de actualizar
+        // Separar los RUCs de los proveedores y precios antes de actualizar
         $proveedoresRuc = $validated['proveedor_ruc'] ?? [];
-        $preciosCosto = $validated['precio_costo'] ?? [];
-        unset($validated['proveedor_ruc']);
-        unset($validated['precio_costo']);
+        $preciosCosto = $validated['precioCosto'] ?? [];
+        unset($validated['proveedor_ruc'], $validated['precioCosto']);
 
         $producto->update($validated);
 
-        // Actualizar la relación con los proveedores solo si se proporciona
-        if (!empty($proveedoresRuc)) {
-            $proveedoresData = [];
-            foreach ($proveedoresRuc as $index => $ruc) {
-                $proveedoresData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
-            }
-            $producto->proveedores()->sync($proveedoresData);
+        // Actualizar la relación con los proveedores incluyendo precio_costo
+        $pivotData = [];
+        foreach ($proveedoresRuc as $index => $ruc) {
+            $pivotData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
         }
+        $producto->proveedores()->sync($pivotData);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
