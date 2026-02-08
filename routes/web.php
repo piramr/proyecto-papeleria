@@ -176,6 +176,7 @@ Route::middleware([
     'role:Auditor',
 ])->prefix('auditor')->name('auditor.')->group(function () {
     Route::get('/dashboard', fn() => view('auditor.dashboard'))->name('dashboard');
-    Route::get('/auditoria', fn() => view('auditoria.index'))->name('auditoria');
-    Route::get('/ajustes', fn() => view('auditor.settings'))->name('ajustes');
+    Route::get('/auditoria', fn() => view('auditor.auditoria'))->name('auditoria');
+    Route::get('/logs', fn() => view('auditor.logs'))->name('logs');
+    Route::get('/ajustes', fn() => view('auditor.ajustes'))->name('ajustes');
 });
