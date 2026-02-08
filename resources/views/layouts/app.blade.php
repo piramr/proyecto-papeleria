@@ -71,10 +71,11 @@
 @extends('adminlte::page')
 
 @section('css')
-    
+    @stack('styles')
 @stop
 
 @section('js')
+    @stack('scripts')
     <!-- Notificaciones Bell y alertas flotantes -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
