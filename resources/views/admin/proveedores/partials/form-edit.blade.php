@@ -92,6 +92,8 @@
                     <p class="text-muted d-block mb-1">
                         {{ $i == 0 ? 'Dirección principal' : 'Dirección adicional' }}
                     </p>
+                    <!-- Input oculto para el id de la dirección -->
+                    <input type="hidden" name="direcciones[{{ $i }}][id]" value="{{ $dir->id }}">
 
                     <div class="form-row align-items-start">
 

@@ -16,9 +16,9 @@ class CreateAuditoriaDatosTable extends Migration
             $table->string('entidad');
             $table->string('recurso_id');
             $table->string('recurso_padre_id')->nullable();
-            $table->string('campo');
+            $table->string('campo')->nullable();
             $table->text('valor_original')->nullable();
-            $table->text('valor_nuevo');
+            $table->text('valor_nuevo')->nullable();
             $table->timestamps();
         });
     }
