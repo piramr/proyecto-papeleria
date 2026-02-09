@@ -117,7 +117,7 @@ Route::middleware([
 
     // ===================== SOLO ADMIN =====================
     Route::middleware(['role:Admin'])->group(function () {
-        Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
+        Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/perfil', fn() => view('admin.perfil.index'))->name('perfil');
         Route::get('/ajustes', [AjusteController::class, 'index'])->name('ajustes');
         Route::put('/ajustes', [AjusteController::class, 'update'])->name('ajustes.update');
