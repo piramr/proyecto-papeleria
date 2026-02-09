@@ -104,7 +104,7 @@ class VentasController extends Controller
             'cliente_email' => 'nullable|email|max:100',
             'cliente_telefono' => 'nullable|string|max:20',
             'cliente_fecha_nacimiento' => 'nullable|date|before:today',
-            'tipo_pago_id' => 'required|exists:tipos_pago,id',
+            'tipo_pago_id' => 'required|exists:tipo_pagos,id',
             'consumidor_final' => 'nullable|boolean',
             'productos' => 'required|array',
             'productos.*.id' => 'required|exists:productos,id',
