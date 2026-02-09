@@ -35,7 +35,7 @@ class AjusteController extends Controller
             'prefijo_factura' => 'nullable|string|max:20',
             'siguiente_factura' => 'nullable|integer|min:1',
             'secuencial_digitos' => 'nullable|integer|min:1|max:12',
-            'tipo_pago_default_id' => 'nullable|exists:tipos_pago,id',
+            'tipo_pago_default_id' => 'nullable|exists:tipo_pagos,id',
             'stock_minimo' => 'nullable|integer|min:0|max:9999',
             'stock_alerta_habilitada' => 'nullable|boolean',
             'notif_stock_bajo' => 'nullable|boolean',
