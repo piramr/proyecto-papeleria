@@ -361,7 +361,8 @@
         case 'desbloquear': operacionTexto = 'desbloqueó'; break;
         default: operacionTexto = log.tipo_operacion || 'realizó operación';
       }
-      let msg = `<b>Usuario responsable #${log.user_id || '?'}</b> ${operacionTexto}`;
+      let userName = log.user ? `user_id: ${log.user_id}, nombre: ${log.user.nombres} ${log.user.apellidos}` : `user_id: ${log.user_id || '?'}`;
+      let msg = `<b>${userName}</b> ${operacionTexto}`;
       if (log.entidad) msg += ` en <code>${log.entidad}</code>`;
       if (log.recurso_id) msg += ` (Recurso ID: ${log.recurso_id})`;
       if (log.ip_address) msg += ` | IP: ${log.ip_address}`;

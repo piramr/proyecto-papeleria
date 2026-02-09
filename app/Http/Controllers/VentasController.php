@@ -136,15 +136,6 @@ class VentasController extends Controller
 
         try {
             DB::beginTransaction();
-            // Registrar log de operación: inicio de registro de venta
-            AuditoriaService::registrarOperacion([
-                'user_id' => Auth::id(),
-                'tipo_operacion' => 'crear',
-                'entidad' => 'Factura',
-                'recurso_id' => null,
-                'resultado' => 'iniciado',
-                'mensaje_error' => null,
-            ]);
 
             $esMenor = false;
             if (!empty($validated['cliente_fecha_nacimiento'])) {

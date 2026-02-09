@@ -19,7 +19,7 @@ class LogsController extends Controller
 
     public function apiLogs()
     {
-        $operaciones = LogOperacion::orderByDesc('timestamp')->limit(100)->get();
+        $operaciones = LogOperacion::with('user')->orderByDesc('timestamp')->limit(100)->get();
         $sistema = LogSistema::with('nivel')->orderByDesc('timestamp')->limit(100)->get();
         $login = LogLogin::with('resultado')->orderByDesc('timestamp')->limit(100)->get();
         return response()->json([
