@@ -33,6 +33,7 @@ return new class extends Migration {
         });
 
         Schema::create('factura_detalles', function (Blueprint $table) {
+            $table->id();
             $table->decimal('precio_unitario');
             $table->unsignedInteger('cantidad');
             $table->decimal('total', 10, 2);
