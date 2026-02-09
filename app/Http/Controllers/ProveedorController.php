@@ -9,6 +9,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
 
 class ProveedorController extends Controller
@@ -52,6 +54,15 @@ class ProveedorController extends Controller
             $proveedor->direcciones()->create($dir);
         }
 
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'crear',
+            'entidad' => 'Proveedor',
+            'recurso_id' => $proveedor->ruc,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()
             ->route('admin.proveedores')
             ->with('success', 'Proveedor registrado correctamente');
@@ -117,6 +128,15 @@ class ProveedorController extends Controller
             }
         });
 
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'actualizar',
+            'entidad' => 'Proveedor',
+            'recurso_id' => $proveedor->ruc,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()
             ->route('admin.proveedores')
             ->with('success', 'Proveedor actualizado correctamente');
@@ -130,11 +150,18 @@ class ProveedorController extends Controller
     {
         $proveedor->direcciones()->delete();
         $proveedor->delete();
-
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'eliminar',
+            'entidad' => 'Proveedor',
+            'recurso_id' => $proveedor->ruc,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json(['message' => 'Proveedor eliminado correctamente']);
         }
-
         return redirect()->route('admin.proveedores')->with('success', 'Proveedor eliminado correctamente');
     }
 

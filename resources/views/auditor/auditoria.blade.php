@@ -30,16 +30,21 @@
         </div>
         <div class="col-md-6">
             <div class="d-flex gap-2 justify-content-end">
-                <select class="form-select form-select-sm w-auto shadow-sm border-0">
-                    <option>Recurso: Todos</option>
-                    <option>Productos</option>
-                    <option>Categorías</option>
+                <select class="form-select form-select-sm w-auto shadow-sm border-0" id="filter-recurso">
+                    <option value="Todos">Recurso: Todos</option>
+                    <option value="Producto">Productos</option>
+                    <option value="Categoria">Categorías</option>
+                    <option value="Proveedor">Proveedores</option>
+                    <option value="Cliente">Clientes</option>
+                    <option value="Compra">Compras</option>
+                    <option value="Venta">Ventas</option>
+                    <option value="User">Usuarios</option>
                 </select>
-                <select class="form-select form-select-sm w-auto shadow-sm border-0">
-                    <option>Op: Todas</option>
-                    <option>CREATE</option>
-                    <option>UPDATE</option>
-                    <option>DELETE</option>
+                <select class="form-select form-select-sm w-auto shadow-sm border-0" id="filter-operacion">
+                    <option value="Todas">Op: Todas</option>
+                    <option value="CREATE">CREATE</option>
+                    <option value="UPDATE">UPDATE</option>
+                    <option value="DELETE">DELETE</option>
                 </select>
             </div>
         </div>
@@ -67,10 +72,11 @@
                 <div class="col-md-8">
                     <div class="d-flex align-items-center gap-2">
                         <span class="text-muted small text-nowrap">Mostrar</span>
-                        <select class="form-select form-select-sm w-auto">
-                            <option>10</option>
-                            <option>25</option>
-                            <option>50</option>
+                        <select class="form-select form-select-sm w-auto" id="per-page-select">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
                         </select>
                         <span class="text-muted small">registros</span>
                     </div>
@@ -95,31 +101,7 @@
                             <th class="border-0">Nuevo</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td class="ps-3 text-muted">1052</td>
-                            <td>2026-02-07 22:10</td>
-                            <td>j_perez<br><small class="text-muted">ID: 15 | S: 4k2</small></td>
-                            <td><span class="badge bg-success badge-op">CREATE</span></td>
-                            <td>Producto</td>
-                            <td><code>PRD-23</code></td>
-                            <td>-</td>
-                            <td>-</td>
-                            <td class="text-muted">NULL</td>
-                            <td>Pintura Satinada</td>
-                        </tr>
-                        <tr>
-                            <td class="ps-3 text-muted">1053</td>
-                            <td>2026-02-07 22:45</td>
-                            <td>admin_user<br><small class="text-muted">ID: 01 | S: 9z1</small></td>
-                            <td><span class="badge bg-warning text-dark badge-op">UPDATE</span></td>
-                            <td>Categoria</td>
-                            <td><code>CAT-05</code></td>
-                            <td><span class="text-primary fw-bold">CAT-M</span></td>
-                            <td>Descuento</td>
-                            <td class="text-decoration-line-through">5%</td>
-                            <td class="fw-bold text-success">10%</td>
-                        </tr>
+                    <tbody id="auditoria-tbody">
                     </tbody>
                 </table>
             </div>
@@ -128,20 +110,11 @@
         <div class="card-footer bg-white py-3 border-0">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="text-muted small mb-0">Mostrando 1 a 10 de 50 registros</p>
+                    <p class="text-muted small mb-0" id="pagination-info">Mostrando 0 a 0 de 0 registros</p>
                 </div>
                 <div class="col-md-6">
                     <nav aria-label="Navegación de registros">
-                        <ul class="pagination pagination-sm justify-content-end">
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#"><i class="fas fa-angle-left"></i></a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="fas fa-angle-right"></i></a>
-                            </li>
+                        <ul class="pagination pagination-sm justify-content-end mb-0" id="pagination-container">
                         </ul>
                     </nav>
                 </div>
@@ -154,29 +127,176 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // --- AUDITORÍA CON PAGINACIÓN ---
+        var currentPage = 1;
+        var perPage = 10;
+        var autoRefresh = true;
+        
+        function renderAuditoriaRow(a) {
+            var sessionShort = a.session_id ? a.session_id.substring(0, 8) + '...' : '-';
+            var sessionFull = a.session_id || '-';
+            var opClass = 'bg-secondary';
+            if (a.tipo_operacion === 'CREATE') opClass = 'bg-success';
+            else if (a.tipo_operacion === 'UPDATE') opClass = 'bg-warning text-dark';
+            else if (a.tipo_operacion === 'DELETE') opClass = 'bg-danger';
+            
+            return `<tr>
+                <td class='ps-3 text-muted'>${a.id || ''}</td>
+                <td>${a.timestamp || ''}</td>
+                <td>ID: ${a.user_id || '-'}<br><small class='text-muted' title='${sessionFull}' style='cursor: pointer;'>S: ${sessionShort}</small></td>
+                <td><span class='badge badge-op ${opClass}'>${a.tipo_operacion || '-'}</span></td>
+                <td>${a.entidad || ''}</td>
+                <td><code>${a.recurso_id || ''}</code></td>
+                <td>${a.recurso_padre_id || '-'}</td>
+                <td>${a.campo || '-'}</td>
+                <td class='text-muted'>${a.valor_original || 'NULL'}</td>
+                <td class='fw-bold text-success'>${a.valor_nuevo || ''}</td>
+            </tr>`;
+        }
+        
+        function renderPagination(data) {
+            var container = document.getElementById('pagination-container');
+            var info = document.getElementById('pagination-info');
+            
+            // Actualizar info
+            info.textContent = `Mostrando ${data.from || 0} a ${data.to || 0} de ${data.total} registros`;
+            
+            // Generar paginación
+            var html = '';
+            
+            // Botón anterior
+            html += `<li class="page-item ${data.current_page <= 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${data.current_page - 1}"><i class="fas fa-angle-left"></i></a>
+            </li>`;
+            
+            // Páginas
+            var startPage = Math.max(1, data.current_page - 2);
+            var endPage = Math.min(data.last_page, data.current_page + 2);
+            
+            if (startPage > 1) {
+                html += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+                if (startPage > 2) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+            }
+            
+            for (var i = startPage; i <= endPage; i++) {
+                html += `<li class="page-item ${i === data.current_page ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>`;
+            }
+            
+            if (endPage < data.last_page) {
+                if (endPage < data.last_page - 1) {
+                    html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                html += `<li class="page-item"><a class="page-link" href="#" data-page="${data.last_page}">${data.last_page}</a></li>`;
+            }
+            
+            // Botón siguiente
+            html += `<li class="page-item ${data.current_page >= data.last_page ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${data.current_page + 1}"><i class="fas fa-angle-right"></i></a>
+            </li>`;
+            
+            container.innerHTML = html;
+            
+            // Event listeners para paginación
+            container.querySelectorAll('a[data-page]').forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var page = parseInt(this.getAttribute('data-page'));
+                    if (page >= 1 && page <= data.last_page) {
+                        currentPage = page;
+                        fetchAuditoria();
+                    }
+                });
+            });
+        }
+        
+        function fetchAuditoria() {
+            var recurso = document.getElementById('filter-recurso').value;
+            var operacion = document.getElementById('filter-operacion').value;
+            
+            var url = '/auditor/api/auditoria?page=' + currentPage + '&per_page=' + perPage;
+            if (recurso !== 'Todos') url += '&recurso=' + encodeURIComponent(recurso);
+            if (operacion !== 'Todas') url += '&operacion=' + encodeURIComponent(operacion);
+            
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('auditoria-tbody').innerHTML = data.auditoria.map(renderAuditoriaRow).join('');
+                    renderPagination(data);
+                });
+        }
+        
+        // Event listeners para filtros y paginación
         document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('per-page-select').addEventListener('change', function() {
+                perPage = parseInt(this.value);
+                currentPage = 1;
+                fetchAuditoria();
+            });
+            
+            document.getElementById('filter-recurso').addEventListener('change', function() {
+                currentPage = 1;
+                fetchAuditoria();
+            });
+            
+            document.getElementById('filter-operacion').addEventListener('change', function() {
+                currentPage = 1;
+                fetchAuditoria();
+            });
+            
+            fetchAuditoria();
+        });
+        
+        // Auto-refresh solo en la primera página
+        setInterval(function() {
+            if (autoRefresh && currentPage === 1) {
+                fetchAuditoria();
+            }
+        }, 5000);
+
+        // --- GRÁFICO CON DATOS REALES ---
+        var chartData = { labels: [], create: [], update: [], delete: [] };
+        var myChart = null;
+        
+        function fetchChartData() {
+            return fetch('/auditor/api/auditoria/chart?dias=7')
+                .then(r => r.json())
+                .then(data => {
+                    chartData = data;
+                    return data;
+                })
+                .catch(err => {
+                    console.error('Error fetching chart data:', err);
+                    return chartData;
+                });
+        }
+        
+        function initAuditoriaChart() {
             const canvas = document.getElementById('mainChart');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            let myChart;
-            const dataLabels = ['01 Feb', '02 Feb', '03 Feb', '04 Feb', '05 Feb', '06 Feb', '07 Feb'];
             const theme = { create: '#198754', update: '#ffc107', delete: '#dc3545' };
+            
             function getGradient(color) {
                 const g = ctx.createLinearGradient(0, 0, 0, 300);
                 g.addColorStop(0, color + '66');
                 g.addColorStop(1, 'rgba(255,255,255,0)');
                 return g;
             }
+            
             function render(type) {
                 if (myChart) myChart.destroy();
                 myChart = new Chart(ctx, {
                     type: type,
                     data: {
-                        labels: dataLabels,
+                        labels: chartData.labels,
                         datasets: [
                             {
                                 label: 'CREATE',
-                                data: [10, 25, 12, 30, 20, 40, 35],
+                                data: chartData.create,
                                 borderColor: theme.create,
                                 backgroundColor: type === 'line' ? getGradient(theme.create) : theme.create,
                                 fill: type === 'line',
@@ -184,7 +304,7 @@
                             },
                             {
                                 label: 'UPDATE',
-                                data: [30, 45, 35, 60, 50, 70, 65],
+                                data: chartData.update,
                                 borderColor: theme.update,
                                 backgroundColor: type === 'line' ? getGradient(theme.update) : theme.update,
                                 fill: type === 'line',
@@ -192,7 +312,7 @@
                             },
                             {
                                 label: 'DELETE',
-                                data: [2, 8, 4, 10, 5, 12, 6],
+                                data: chartData.delete,
                                 borderColor: theme.delete,
                                 backgroundColor: type === 'line' ? getGradient(theme.delete) : theme.delete,
                                 fill: type === 'line',
@@ -211,10 +331,32 @@
                     }
                 });
             }
+            
+            // Cargar datos y renderizar
+            fetchChartData().then(() => {
+                render('line');
+            });
+            
+            // Event listeners para cambiar tipo de gráfico
             document.querySelectorAll('input[name="vMode"]').forEach(r => {
                 r.addEventListener('change', (e) => render(e.target.value));
             });
-            render('line');
-        });
+        }
+        
+        document.addEventListener('DOMContentLoaded', initAuditoriaChart);
+        
+        // Actualizar gráfico cada 30 segundos
+        setInterval(function() {
+            fetchChartData().then(() => {
+                var activeMode = document.querySelector('input[name="vMode"]:checked');
+                if (activeMode && myChart) {
+                    myChart.data.labels = chartData.labels;
+                    myChart.data.datasets[0].data = chartData.create;
+                    myChart.data.datasets[1].data = chartData.update;
+                    myChart.data.datasets[2].data = chartData.delete;
+                    myChart.update();
+                }
+            });
+        }, 30000);
     </script>
 @endpush

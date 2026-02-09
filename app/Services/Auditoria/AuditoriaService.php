@@ -35,6 +35,7 @@ class AuditoriaService
             'timestamp' => now(),
             'user_id' => $params['user_id'] ?? (Auth::id() ?? 0),
             'session_id' => $params['session_id'] ?? session()->getId(),
+            'ip_address' => $params['ip_address'] ?? request()->ip(),
             'tipo_operacion' => $params['tipo_operacion'],
             'entidad' => $params['entidad'],
             'recurso_id' => $params['recurso_id'] ?? null,

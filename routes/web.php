@@ -175,8 +175,17 @@ Route::middleware([
     'verified',
     'role:Auditor',
 ])->prefix('auditor')->name('auditor.')->group(function () {
-    Route::get('/dashboard', fn() => view('auditor.dashboard'))->name('dashboard');
-    Route::get('/auditoria', fn() => view('auditor.auditoria'))->name('auditoria');
-    Route::get('/logs', fn() => view('auditor.logs'))->name('logs');
-    Route::get('/ajustes', fn() => view('auditor.ajustes'))->name('ajustes');
+    Route::get('/dashboard', [\App\Http\Controllers\Auditor\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/auditoria', [\App\Http\Controllers\Auditor\AuditoriaController::class, 'index'])->name('auditoria');
+    Route::get('/logs', [\App\Http\Controllers\Auditor\LogsController::class, 'index'])->name('logs');
+    Route::get('/ajustes', [\App\Http\Controllers\Auditor\AjustesController::class, 'index'])->name('ajustes');
+    Route::put('/ajustes', [\App\Http\Controllers\Auditor\AjustesController::class, 'update'])->name('ajustes.update');
+    Route::post('/ajustes/limpiar/{tipo}', [\App\Http\Controllers\Auditor\AjustesController::class, 'limpiarLog'])->name('ajustes.limpiar');
+    // APIs para actualización en tiempo real
+    Route::get('/api/dashboard', [\App\Http\Controllers\Auditor\DashboardController::class, 'apiStats'])->name('api.dashboard');
+    Route::get('/api/logs', [\App\Http\Controllers\Auditor\LogsController::class, 'apiLogs'])->name('api.logs');
+    Route::get('/api/likert', [\App\Http\Controllers\Auditor\LogsController::class, 'apiLikert'])->name('api.likert');
+    Route::get('/api/auditoria', [\App\Http\Controllers\Auditor\AuditoriaController::class, 'apiAuditoria'])->name('api.auditoria');
+    Route::get('/api/auditoria/chart', [\App\Http\Controllers\Auditor\AuditoriaController::class, 'apiChartData'])->name('api.auditoria.chart');
+    Route::get('/api/ajustes/stats', [\App\Http\Controllers\Auditor\AjustesController::class, 'apiStats'])->name('api.ajustes.stats');
 });

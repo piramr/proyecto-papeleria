@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Cliente;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
 class ClienteController extends Controller
 {
@@ -41,8 +43,16 @@ class ClienteController extends Controller
             'genero' => ['nullable', 'string', 'max:20'],
         ]);
 
-        Cliente::create($request->all());
-
+        $cliente = Cliente::create($request->all());
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'crear',
+            'entidad' => 'Cliente',
+            'recurso_id' => $cliente->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()->route('admin.clientes.index')->with('success', 'Cliente creado con éxito.');
     }
 
@@ -78,7 +88,15 @@ class ClienteController extends Controller
         ]);
 
         $cliente->update($request->all());
-
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'actualizar',
+            'entidad' => 'Cliente',
+            'recurso_id' => $cliente->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()->route('admin.clientes.index')->with('success', 'Cliente actualizado con éxito.');
     }
 
@@ -88,6 +106,15 @@ class ClienteController extends Controller
     public function destroy(Cliente $cliente)
     {
         $cliente->delete();
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'eliminar',
+            'entidad' => 'Cliente',
+            'recurso_id' => $cliente->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()->route('admin.clientes.index')->with('success', 'Cliente eliminado con éxito.');
     }
 }

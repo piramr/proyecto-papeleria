@@ -10,6 +10,8 @@ use App\Models\Proveedor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
 class ProductoController extends Controller
 {
@@ -44,7 +46,6 @@ class ProductoController extends Controller
         unset($validated['proveedor_ruc'], $validated['precioCosto']);
 
         $producto = Producto::create($validated);
-
         // Guardar la relación con los proveedores incluyendo precio_costo
         if (!empty($proveedoresRuc)) {
             $pivotData = [];
@@ -53,7 +54,15 @@ class ProductoController extends Controller
             }
             $producto->proveedores()->attach($pivotData);
         }
-
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'crear',
+            'entidad' => 'Producto',
+            'recurso_id' => $producto->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()->route('admin.productos')->with('success', 'Producto registrado correctamente');
     }
 
@@ -107,21 +116,27 @@ class ProductoController extends Controller
         unset($validated['proveedor_ruc'], $validated['precioCosto']);
 
         $producto->update($validated);
-
         // Actualizar la relación con los proveedores incluyendo precio_costo
         $pivotData = [];
         foreach ($proveedoresRuc as $index => $ruc) {
             $pivotData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
         }
         $producto->proveedores()->sync($pivotData);
-
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'actualizar',
+            'entidad' => 'Producto',
+            'recurso_id' => $producto->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'message' => 'Producto actualizado correctamente',
                 'producto' => $producto->load(['categoria','proveedores'])
             ]);
         }
-
         return redirect()->route('admin.productos')->with('success', 'Producto actualizado correctamente');
     }
 
@@ -133,17 +148,32 @@ class ProductoController extends Controller
         try {
             // SoftDelete - no eliminamos las relaciones, solo marcamos como eliminado
             $producto->delete();
-
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'eliminar',
+                'entidad' => 'Producto',
+                'recurso_id' => $producto->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['message' => 'Producto eliminado correctamente']);
             }
-
             return redirect()->route('admin.productos')->with('success', 'Producto eliminado correctamente');
         } catch (\Exception $e) {
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'eliminar',
+                'entidad' => 'Producto',
+                'recurso_id' => $producto->id,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['error' => 'Error al eliminar el producto: ' . $e->getMessage()], 400);
             }
-            
             return back()->with('error', 'Error al eliminar el producto: ' . $e->getMessage());
         }
     }

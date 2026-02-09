@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
 class UserController extends Controller
 {
@@ -57,6 +59,17 @@ class UserController extends Controller
 
         // ✅ rol spatie
         $user->syncRoles([$roleName]);
+
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'crear',
+            'entidad' => 'Usuario',
+            'recurso_id' => $user->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
+        AuditoriaService::registrarLogSistema('INFO', '[SISTEMA] Nuevo usuario registrado en el sistema: ' . $user->email . ' con rol ' . $roleName);
 
         return redirect()->route('admin.usuarios.index')->with('success', 'Usuario creado.');
     }
@@ -107,12 +120,31 @@ class UserController extends Controller
         // ✅ cambiar rol spatie
         $usuario->syncRoles([$roleName]);
 
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'actualizar',
+            'entidad' => 'Usuario',
+            'recurso_id' => $usuario->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
+
         return redirect()->route('admin.usuarios.index')->with('success', 'Usuario actualizado.');
     }
 
     public function destroy(User $usuario)
     {
         $usuario->delete();
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'eliminar',
+            'entidad' => 'Usuario',
+            'recurso_id' => $usuario->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()->route('admin.usuarios.index')->with('success', 'Usuario eliminado.');
     }
 
@@ -121,12 +153,19 @@ class UserController extends Controller
         $usuario->forceFill([
             'is_active' => true,
             'inactivated_at' => null,
-            // 'password' => Hash::make('12345678'), // ELIMINADO: No resetear contraseña
         ])->save();
-        
         // Limpiar intentos de login en caché (Clave sin IP)
         RateLimiter::clear('login_lock|'.$usuario->email);
-
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'desbloquear',
+            'entidad' => 'Usuario',
+            'recurso_id' => $usuario->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
+        AuditoriaService::registrarLogSistema('WARNING', '[SEGURIDAD] Usuario desbloqueado manualmente: ' . $usuario->email . '. Acción realizada por administrador.');
         return redirect()->back()->with('success', 'Usuario desbloqueado correctamente. Contraseña restablecida a 12345678');
     }
 }

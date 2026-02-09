@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Factura;
 use App\Models\TipoPago;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 use Illuminate\Http\Request;
 
 class ReportesController extends Controller
@@ -43,7 +45,15 @@ class ReportesController extends Controller
             'facturas' => $facturas,
             'totales' => $totales,
         ]);
-
+        // Log de operación
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'generar_pdf',
+            'entidad' => 'ReporteVentas',
+            'recurso_id' => null,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return $pdf->stream();
     }
 
@@ -146,11 +156,18 @@ class ReportesController extends Controller
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
         $timestamp = now()->format('Y-m-d_H-i-s');
         $filename = 'Reporte_Ventas_' . $timestamp . '.xlsx';
-
+        // Log de operación
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'generar_excel',
+            'entidad' => 'ReporteVentas',
+            'recurso_id' => null,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename=' . $filename);
         header('Cache-Control: max-age=0');
-
         $writer->save('php://output');
         exit;
     }
