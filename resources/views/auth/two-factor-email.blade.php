@@ -30,9 +30,17 @@
                     {{ __('¿No recibiste el código?') }}
                 </a>
 
-                <x-button class="ml-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-900">
-                    {{ __('Verificar') }}
-                </x-button>
+                <div class="flex items-center gap-4">
+                    <form method="GET" action="{{ route('logout.get') }}">
+                        <x-button type="submit" class="bg-gray-200 text-gray-800 hover:bg-gray-300 active:bg-gray-400">
+                            {{ __('Cancelar y volver al inicio') }}
+                        </x-button>
+                    </form>
+
+                    <x-button class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-900">
+                        {{ __('Verificar') }}
+                    </x-button>
+                </div>
             </div>
         </form>
     </x-authentication-card>
