@@ -15,7 +15,7 @@ class UserSeeder extends Seeder
     {
         // Admin User
         $admin = User::firstOrCreate(
-            ['email' => 'admin@papeleria.com'],
+            ['email' => 'bepito7340@manupay.com'],
             [
                 'nombres' => 'Administrador',
                 'apellidos' => 'Sistema',
@@ -47,7 +47,7 @@ class UserSeeder extends Seeder
 
         // Auditor User
         $auditor = User::firstOrCreate(
-            ['email' => 'auditor@papeleria.com'],
+            ['email' => 'bijonic708@newtrea.com'],
             [
                 'nombres' => 'Maria',
                 'apellidos' => 'Gomez',
