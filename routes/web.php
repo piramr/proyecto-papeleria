@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VentasController;
 use App\Http\Controllers\Admin\AjusteController;
+use App\Http\Controllers\Admin\AnalisisController;
 use App\Models\Categoria;
 use App\Models\Proveedor;
 
@@ -62,7 +63,7 @@ Route::middleware([
 
     // Módulos compartidos (vistas)
     Route::get('/ventas', fn() => view('admin.ventas.index'))->name('ventas');
-    Route::get('/analisis', fn() => view('admin.analisis.index'))->name('analisis');
+    Route::get('/analisis', [AnalisisController::class, 'index'])->name('analisis');
     Route::get('/productos', fn() => view('admin.inventario.productos.index', [
         'categorias' => Categoria::all(),
         'proveedores' => Proveedor::all(),
