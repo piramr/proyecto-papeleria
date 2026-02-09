@@ -152,30 +152,30 @@
     $(function() {
 
       function attachEditFormAjax() {
-        const $form = $('#contenidoModal').find(
-        'form[action*="proveedores"]');
-        if ($form.length === 0) return;
+        // Esta función servirá tanto para el formulario del Modal como para el de Registro
+        const forms = $(
+        'form'); // O selecciona específicamente tus formularios
 
-        if ($form.data('ajax-bound')) return;
-        $form.data('ajax-bound', true);
+        forms.each(function() {
+          const $form = $(this);
+          if ($form.data('ajax-bound')) return;
+          $form.data('ajax-bound', true);
 
-        $form.on('submit', function(e) {
-          const method = $form.find('input[name="_method"]').val();
-          if (method && method.toUpperCase() === 'PUT') {
+          $form.on('submit', function(e) {
+            // Si el formulario no debe enviarse por AJAX (ej. el de crear si no quieres AJAX allí), 
+            // podrías añadir una clase .ajax-form y filtrar.
             e.preventDefault();
 
-            // Clear previous errors
+            // 1. Limpiar errores previos
             $form.find('.is-invalid').removeClass('is-invalid');
-            $form.find(
-              '.invalid-feedback.dynamic-error, .text-danger.dynamic-error'
-              ).remove();
+            $form.find('.invalid-feedback.dynamic-error').remove();
 
             const formData = new FormData(this);
             const actionUrl = $form.attr('action');
 
             $.ajax({
               url: actionUrl,
-              type: 'POST', // <-- Cambiado a POST
+              type: 'POST',
               data: formData,
               processData: false,
               contentType: false,
@@ -185,39 +185,56 @@
                 'Accept': 'application/json'
               },
               success: function(resp) {
+                // Si es el modal, cerrarlo
                 $('#modalEditarProveedor').modal('hide');
-                table.ajax.reload();
-                alert((resp && resp.message) ? resp.message :
-                  'Proveedor actualizado correctamente');
+                // Recargar tabla
+                if (typeof table !== 'undefined') table.ajax
+                  .reload();
+                alert(resp.message || 'Proveedor actualizaco con éxito');
+
+                // Si es el formulario de registro, resetearlo y cerrar el collapse
+                if ($form.closest('#formProveedor').length) {
+                  $form[0].reset();
+                  $('#formProveedor').collapse('hide');
+                }
               },
               error: function(xhr) {
-                if (xhr.status === 422 && xhr.responseJSON && xhr
-                  .responseJSON.errors) {
+                if (xhr.status === 422 && xhr.responseJSON
+                  .errors) {
                   const errors = xhr.responseJSON.errors;
 
                   Object.keys(errors).forEach(function(field) {
                     const message = errors[field][0];
-                    const $input = $form.find('[name="' +
-                      field + '"]');
 
-                    if ($input.length) {
+                    // Lógica para transformar "direcciones.0.calle" en "direcciones[0][calle]"
+                    let fieldName = field;
+                    if (field.includes('.')) {
+                      let parts = field.split('.');
+                      fieldName = parts[0] + '[' + parts
+                        .slice(1).join('][') + ']';
+                    }
+
+                    // Buscar el input por el nombre exacto que usa Laravel en el Request
+                    let $input = $form.find(
+                      `[name="${fieldName}"]`);
+
+                    if ($input.length > 0) {
                       $input.addClass('is-invalid');
-                      $('<span class="invalid-feedback dynamic-error"></span>')
-                        .text(message).insertAfter($input);
-                    } else {
-                      $('<div class="alert alert-danger dynamic-error mb-2"></div>')
-                        .text(message).prependTo(
-                          '#contenidoModal');
+                      // Insertar el error de Bootstrap
+                      $input.after(
+                        `<div class="invalid-feedback dynamic-error">${message}</div>`
+                        );
                     }
                   });
                 } else {
-                  alert('Error al actualizar el proveedor');
+                  alert('Ocurrió un error inesperado.');
                 }
               }
             });
-          }
+          });
         });
       }
+
 
       const table = $('#tablaProveedores').DataTable({
         processing: true,

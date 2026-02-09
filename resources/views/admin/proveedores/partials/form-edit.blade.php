@@ -71,12 +71,6 @@
             </div>
         </div>
 
-        {{-- ERROR GENERAL --}}
-        @if ($errors->has('direcciones'))
-            <div class="alert alert-danger">
-                {{ $errors->first('direcciones') }}
-            </div>
-        @endif
         <div id="direcciones-container" class="col-md-12">
 
             @foreach ($proveedor->direcciones as $i => $dir)
