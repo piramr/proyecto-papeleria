@@ -18,8 +18,8 @@ class CreateLogOperacionTable extends Migration
             $table->string('recurso_id')->nullable();
             $table->string('recurso_padre_id')->nullable();
             $table->string('resultado'); // OK / ERROR
-            $table->string('codigo_error')->nullable();
-            $table->string('mensaje_error', 255)->nullable();
+            $table->text('codigo_error')->nullable();
+            $table->text('mensaje_error')->nullable();
             $table->timestamps();
         });
     }
