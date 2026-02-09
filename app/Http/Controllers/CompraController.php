@@ -9,6 +9,8 @@ use App\Models\Producto;
 use App\Models\TipoPago;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
 class CompraController extends Controller {
     /**
@@ -66,7 +68,7 @@ class CompraController extends Controller {
                 'proveedor_ruc' => $request->proveedor_ruc,
                 'descripcion' => $request->descripcion,
                 'tipo_pago_id' => $request->tipo_pago_id,
-                'usuario_id' => auth()->id(),
+                'usuario_id' => Auth::id(),
                 'estado' => 'pendiente',
             ]);
 
@@ -74,7 +76,6 @@ class CompraController extends Controller {
             foreach ($request->input('detalles') as $detalle) {
                 $producto = Producto::findOrFail($detalle['producto_id']);
                 $subtotal = $detalle['cantidad'] * $detalle['precio_unitario'];
-
                 CompraDetalle::create([
                     'compra_id' => $compra->id,
                     'producto_id' => $detalle['producto_id'],
@@ -83,17 +84,32 @@ class CompraController extends Controller {
                     'subtotal' => $subtotal,
                 ]);
             }
-
             // Calcular totales
             $compra->calcularTotal();
-
             DB::commit();
-
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'crear',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
             return redirect()->route('admin.compras.show', $compra->id)
                 ->with('success', 'Compra realizada exitosamente. Número de compra: ' . $compra->numero_compra);
 
         } catch (\Exception $e) {
             DB::rollBack();
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'crear',
+                'entidad' => 'Compra',
+                'recurso_id' => null,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
             return back()->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
@@ -182,11 +198,29 @@ class CompraController extends Controller {
 
             DB::commit();
 
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'actualizar',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
             return redirect()->route('compras.show', $compra->id)
                 ->with('success', 'Compra actualizada exitosamente');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'actualizar',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
             return back()->with('error', 'Error al actualizar la compra: ' . $e->getMessage())
                 ->withInput();
         }
@@ -218,10 +252,28 @@ class CompraController extends Controller {
 
             DB::commit();
 
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'recibir',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
             return back()->with('success', 'Compra marcada como recibida. Stock actualizado.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'recibir',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
             return back()->with('error', 'Error al recibir la compra: ' . $e->getMessage());
         }
     }
@@ -244,9 +296,27 @@ class CompraController extends Controller {
                 'observaciones' => $request->razon,
             ]);
 
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'cancelar',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
             return back()->with('success', 'Compra cancelada exitosamente');
 
         } catch (\Exception $e) {
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'cancelar',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
             return back()->with('error', 'Error al cancelar la compra: ' . $e->getMessage());
         }
     }

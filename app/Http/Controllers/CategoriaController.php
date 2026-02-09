@@ -7,6 +7,8 @@ use App\Http\Requests\UpdateCategoriaRequest;
 use App\Models\Categoria;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
 class CategoriaController extends Controller {
     /**
@@ -29,8 +31,16 @@ class CategoriaController extends Controller {
     public function store(StoreCategoriaRequest $request) {
         $data = $request->validated();
 
-        Categoria::create($data);
-
+        $categoria = Categoria::create($data);
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'crear',
+            'entidad' => 'Categoria',
+            'recurso_id' => $categoria->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()->route('admin.categorias')->with('success', 'Categoría registrada correctamente');
     }
 
@@ -59,14 +69,21 @@ class CategoriaController extends Controller {
     public function update(UpdateCategoriaRequest $request, Categoria $categoria) {
         $validated = $request->validated();
         $categoria->update($validated);
-
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'actualizar',
+            'entidad' => 'Categoria',
+            'recurso_id' => $categoria->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'message' => 'Categoría actualizada correctamente',
                 'categoria' => $categoria
             ]);
         }
-
         return redirect()->route('admin.categorias')->with('success', 'Categoría actualizada correctamente');
     }
 
@@ -75,11 +92,18 @@ class CategoriaController extends Controller {
      */
     public function destroy(Categoria $categoria) {
         $categoria->delete();
-
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'eliminar',
+            'entidad' => 'Categoria',
+            'recurso_id' => $categoria->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json(['message' => 'Categoría eliminada correctamente']);
         }
-
         return redirect()->route('admin.categorias')->with('success', 'Categoría eliminada correctamente');
     }
 

@@ -12,6 +12,7 @@ class CreateLogOperacionTable extends Migration
             $table->timestamp('timestamp');
             $table->unsignedBigInteger('user_id');
             $table->string('session_id');
+            $table->string('ip_address', 45)->nullable();
             $table->string('tipo_operacion');
             $table->string('entidad');
             $table->string('recurso_id')->nullable();

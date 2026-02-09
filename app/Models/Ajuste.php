@@ -28,6 +28,23 @@ class Ajuste extends Model
         'notif_stock_bajo',
         'notif_venta_realizada',
         'notif_compra_recibida',
+        // Configuración de retención de logs
+        'log_operacion_retencion',
+        'log_operacion_auto_delete',
+        'log_sistema_retencion',
+        'log_sistema_auto_delete',
+        'log_login_retencion',
+        'log_login_auto_delete',
+    ];
+
+    protected $casts = [
+        'log_operacion_auto_delete' => 'boolean',
+        'log_sistema_auto_delete' => 'boolean',
+        'log_login_auto_delete' => 'boolean',
+        'stock_alerta_habilitada' => 'boolean',
+        'notif_stock_bajo' => 'boolean',
+        'notif_venta_realizada' => 'boolean',
+        'notif_compra_recibida' => 'boolean',
     ];
 
     public static function getOrCreate(): self
