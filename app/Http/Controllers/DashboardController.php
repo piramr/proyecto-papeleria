@@ -64,22 +64,22 @@ class DashboardController extends Controller
             : 0;
 
         // Stock total de productos
-        $stockTotal = Producto::sum('stock');
+        $stockTotal = Producto::sum('cantidad_stock');
         
         // Productos con bajo stock (menos de 10 unidades)
-        $productosBajoStock = Producto::where('stock', '<', 10)->count();
+        $productosBajoStock = Producto::where('cantidad_stock', '<', 10)->count();
 
         // Ingresos por mes (últimos 6 meses) - Compatible con SQLite
         $ingresosPorMes = Factura::select(
-                DB::raw("strftime('%m', fecha_hora) as mes"),
-                DB::raw("strftime('%Y', fecha_hora) as anio"),
-                DB::raw('SUM(total) as total')
-            )
-            ->where('fecha_hora', '>=', Carbon::now()->subMonths(6)->startOfMonth())
-            ->groupBy('anio', 'mes')
-            ->orderBy('anio', 'asc')
-            ->orderBy('mes', 'asc')
-            ->get();
+        DB::raw("to_char(fecha_hora, 'MM') as mes"),
+        DB::raw("to_char(fecha_hora, 'YYYY') as anio"),
+        DB::raw('SUM(total) as total')
+        )
+        ->where('fecha_hora', '>=', Carbon::now()->subMonths(6)->startOfMonth())
+        ->groupBy('anio', 'mes')
+        ->orderBy('anio', 'asc')
+        ->orderBy('mes', 'asc')
+        ->get();
 
         // Productos más vendidos
         $productosMasVendidos = DB::table('factura_detalles')
@@ -104,7 +104,7 @@ class DashboardController extends Controller
             ->get();
 
         // Gastos en compras del mes
-        $gastosMes = Compra::whereBetween('fecha_hora', [
+        $gastosMes = Compra::whereBetween('fecha_compra', [
                 Carbon::now()->startOfMonth(),
                 Carbon::now()->endOfMonth()
             ])
