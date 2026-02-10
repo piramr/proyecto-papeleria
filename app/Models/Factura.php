@@ -21,6 +21,10 @@ class Factura extends Model {
         'tipo_pago_id',
     ];
 
+    protected $casts = [
+        'fecha_hora' => 'datetime',
+    ];
+
     /**
      * Relación: una factura pertenece a un cliente
      */
