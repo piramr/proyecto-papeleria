@@ -356,6 +356,36 @@
         });
       });
 
+      // Eliminar proveedor (soft delete)
+      $(document).on('click', '.btnDeleteProveedor', function() {
+        const proveedorId = $(this).data('id');
+        const proveedorNombre = $(this).data('name') || 'este proveedor';
+
+        if (!confirm('¿Estás seguro de que deseas eliminar "' + proveedorNombre + '"? Esta acción lo desactivará.')) {
+          return;
+        }
+
+        $.ajax({
+          url: "{{ url('admin/proveedores') }}/" + proveedorId,
+          type: 'DELETE',
+          headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'Accept': 'application/json'
+          },
+          success: function(resp) {
+            if (typeof table !== 'undefined') table.ajax.reload();
+            alert((resp && resp.message) ? resp.message : 'Proveedor desactivado correctamente');
+          },
+          error: function(xhr) {
+            let errorMsg = 'Error al eliminar el proveedor';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+              errorMsg = xhr.responseJSON.message;
+            }
+            alert(errorMsg);
+          }
+        });
+      });
+
     });
 
     attachEditFormAjax();
