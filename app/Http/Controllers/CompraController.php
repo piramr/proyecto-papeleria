@@ -146,7 +146,7 @@ class CompraController extends Controller {
             return back()->with('error', 'Solo se pueden editar compras pendientes');
         }
 
-        $this->validate($request, [
+        $request->validate([
             'proveedor_ruc' => 'required|exists:proveedores,ruc',
             'fecha_compra' => 'required|date',
             'tipo_pago_id' => 'required|exists:tipo_pagos,id',
@@ -282,7 +282,7 @@ class CompraController extends Controller {
      * Cambiar estado de compra a cancelada
      */
     public function cancelar(Request $request, Compra $compra) {
-        $this->validate($request, [
+        $request->validate([
             'razon' => 'required|string|min:10',
         ]);
 
