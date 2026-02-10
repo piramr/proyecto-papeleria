@@ -148,7 +148,6 @@ class ProveedorController extends Controller
      */
     public function destroy(Proveedor $proveedor)
     {
-        $proveedor->direcciones()->delete();
         $proveedor->delete();
         // Log de operación y sistema
         AuditoriaService::registrarOperacion([
@@ -160,9 +159,9 @@ class ProveedorController extends Controller
             'mensaje_error' => null,
         ]);
         if (request()->ajax() || request()->wantsJson()) {
-            return response()->json(['message' => 'Proveedor eliminado correctamente']);
+            return response()->json(['message' => 'Proveedor desactivado correctamente']);
         }
-        return redirect()->route('admin.proveedores')->with('success', 'Proveedor eliminado correctamente');
+        return redirect()->route('admin.proveedores')->with('success', 'Proveedor desactivado correctamente');
     }
 
     public function datatables()
@@ -195,8 +194,8 @@ class ProveedorController extends Controller
             ->addColumn('acciones', function ($proveedor) {
                 return '
                 <div class="d-flex justify-content-center">
-                    <button class="btn btn-sm btn-warning mr-1 btnEditProveedor" data-id="' . $proveedor->ruc . '"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-sm btn-warning mr-1 btnEditProveedor" data-id="' . $proveedor->ruc . '" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger btnDeleteProveedor" data-id="' . $proveedor->ruc . '" data-name="' . e($proveedor->nombre) . '" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </div>
             ';
             })

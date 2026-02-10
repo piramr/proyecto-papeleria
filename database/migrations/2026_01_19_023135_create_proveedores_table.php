@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->string('telefono_secundario', 10)->unique()->nullable();
 
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('proveedor_direcciones', function (Blueprint $table) {

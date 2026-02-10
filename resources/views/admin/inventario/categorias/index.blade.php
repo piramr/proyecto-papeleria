@@ -287,6 +287,36 @@
                 });
             });
 
+            // Eliminar categoría (soft delete)
+            $(document).on('click', '.btnDeleteCategoria', function() {
+                const categoriaId = $(this).data('id');
+                const categoriaNombre = $(this).data('name') || 'esta categoría';
+
+                if (!confirm('¿Estás seguro de que deseas eliminar "' + categoriaNombre + '"? Esta acción la desactivará.')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: "{{ url('admin/categorias') }}/" + categoriaId,
+                    type: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Accept': 'application/json'
+                    },
+                    success: function(resp) {
+                        window.categoriasTable.ajax.reload();
+                        alert((resp && resp.message) ? resp.message : 'Categoría desactivada correctamente');
+                    },
+                    error: function(xhr) {
+                        let errorMsg = 'Error al eliminar la categoría';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        alert(errorMsg);
+                    }
+                });
+            });
+
             // Exponer tabla globalmente para refresh después de actualizar
             window.categoriasTable = table;
 

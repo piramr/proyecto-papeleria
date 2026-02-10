@@ -102,9 +102,9 @@ class CategoriaController extends Controller {
             'mensaje_error' => null,
         ]);
         if (request()->ajax() || request()->wantsJson()) {
-            return response()->json(['message' => 'Categoría eliminada correctamente']);
+            return response()->json(['message' => 'Categoría desactivada correctamente']);
         }
-        return redirect()->route('admin.categorias')->with('success', 'Categoría eliminada correctamente');
+        return redirect()->route('admin.categorias')->with('success', 'Categoría desactivada correctamente');
     }
 
     public function datatables() {
@@ -122,8 +122,8 @@ class CategoriaController extends Controller {
             ->addColumn('acciones', function ($categoria) {
                 return '
                 <div class="d-flex justify-content-center">
-                    <button class="btn btn-sm btn-warning mr-1 btnEditCategoria" data-id="' . $categoria->id . '"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-danger btnDeleteCategoria" data-id="' . $categoria->id . '"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-sm btn-warning mr-1 btnEditCategoria" data-id="' . $categoria->id . '" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger btnDeleteCategoria" data-id="' . $categoria->id . '" data-name="' . e($categoria->nombre) . '" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </div>
             ';
             })
