@@ -39,8 +39,8 @@ class DatabaseSeeder extends Seeder
 
         // Seeder de inventario (proveedores, categorías, productos)
         // Comentar esta línea si no deseas datos de prueba
-        $this->call([
-            InventarioSeeder::class,
-        ]);
+       // $this->call([
+        //    InventarioSeeder::class,
+      //]);
     }
 }
