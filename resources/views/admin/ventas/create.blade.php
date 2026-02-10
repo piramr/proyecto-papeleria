@@ -120,7 +120,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="numero_factura" class="form-label">Número de Factura *</label>
                                     <input type="text" class="form-control @error('numero_factura') is-invalid @enderror" 
-                                        id="numero_factura" name="numero_factura" value="{{ old('numero_factura') }}" 
+                                        id="numero_factura" name="numero_factura" value="{{ old('numero_factura', $sugerenciaFactura ?? '') }}" 
                                         placeholder="{{ $sugerenciaFactura ?? 'Ej. 001-001-000000001' }}"
                                         data-sugerencia="{{ $sugerenciaFactura ?? '' }}" required>
                                 <small class="form-text text-muted">Número secuencial único para el SRI</small>
@@ -336,8 +336,13 @@ document.getElementById('ventasForm').addEventListener('submit', function(e) {
     return true;
 });
 
-// Autocompletar número de factura con sugerencia al salir del campo
+// Autocompletar número de factura con sugerencia al salir del campo o al usar Tab
 if (numeroFacturaInput && sugerenciaFactura) {
+    numeroFacturaInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab' && !this.value.trim()) {
+            this.value = sugerenciaFactura;
+        }
+    });
     numeroFacturaInput.addEventListener('blur', function() {
         if (!this.value.trim()) {
             this.value = sugerenciaFactura;
