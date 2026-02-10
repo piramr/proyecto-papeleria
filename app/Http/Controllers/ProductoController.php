@@ -146,6 +146,26 @@ class ProductoController extends Controller
     public function destroy(Producto $producto)
     {
         try {
+            // Verificar si tiene stock disponible
+            if ($producto->stock > 0) {
+                $mensaje = 'No se puede eliminar el producto porque tiene stock disponible (' . $producto->stock . ' unidades).';
+                
+                // Log de operación fallida
+                AuditoriaService::registrarOperacion([
+                    'user_id' => Auth::id(),
+                    'tipo_operacion' => 'eliminar',
+                    'entidad' => 'Producto',
+                    'recurso_id' => $producto->id,
+                    'resultado' => 'fallido',
+                    'mensaje_error' => $mensaje,
+                ]);
+                
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json(['message' => $mensaje], 400);
+                }
+                return redirect()->route('admin.productos')->with('error', $mensaje);
+            }
+            
             // SoftDelete - no eliminamos las relaciones, solo marcamos como eliminado
             $producto->delete();
             // Log de operación y sistema
