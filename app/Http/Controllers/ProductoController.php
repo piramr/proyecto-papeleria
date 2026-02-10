@@ -10,6 +10,8 @@ use App\Models\Proveedor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
 class ProductoController extends Controller
 {
@@ -38,17 +40,29 @@ class ProductoController extends Controller
     {
         $validated = $request->validated();
 
-        // Separar los RUCs de los proveedores antes de crear el producto
+        // Separar los RUCs de los proveedores y precios antes de crear el producto
         $proveedoresRuc = $validated['proveedor_ruc'] ?? [];
-        unset($validated['proveedor_ruc']);
+        $preciosCosto = $validated['precioCosto'] ?? [];
+        unset($validated['proveedor_ruc'], $validated['precioCosto']);
 
         $producto = Producto::create($validated);
-
-        // Guardar la relación con los proveedores
+        // Guardar la relación con los proveedores incluyendo precio_costo
         if (!empty($proveedoresRuc)) {
-            $producto->proveedores()->attach($proveedoresRuc);
+            $pivotData = [];
+            foreach ($proveedoresRuc as $index => $ruc) {
+                $pivotData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
+            }
+            $producto->proveedores()->attach($pivotData);
         }
-
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'crear',
+            'entidad' => 'Producto',
+            'recurso_id' => $producto->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()->route('admin.productos')->with('success', 'Producto registrado correctamente');
     }
 
@@ -57,7 +71,16 @@ class ProductoController extends Controller
      */
     public function show(Producto $producto)
     {
-        //
+        $producto->load(['categoria', 'proveedores']);
+        
+        if (request()->wantsJson() || request()->expectsJson()) {
+            $data = $producto->toArray();
+            // Asegurar que los proveedores incluyen el pivot
+            $data['proveedores'] = $producto->proveedores->toArray();
+            return response()->json($data);
+        }
+
+        return view('admin.inventario.productos.show', compact('producto'));
     }
 
     /**
@@ -65,6 +88,7 @@ class ProductoController extends Controller
      */
     public function edit(Producto $producto)
     {
+        $producto->load('proveedores');
         $categorias = Categoria::all();
         $proveedores = Proveedor::all();
 
@@ -86,22 +110,33 @@ class ProductoController extends Controller
     {
         $validated = $request->validated();
 
-        // Separar los RUCs de los proveedores antes de actualizar
+        // Separar los RUCs de los proveedores y precios antes de actualizar
         $proveedoresRuc = $validated['proveedor_ruc'] ?? [];
-        unset($validated['proveedor_ruc']);
+        $preciosCosto = $validated['precioCosto'] ?? [];
+        unset($validated['proveedor_ruc'], $validated['precioCosto']);
 
         $producto->update($validated);
-
-        // Actualizar la relación con los proveedores
-        $producto->proveedores()->sync($proveedoresRuc);
-
+        // Actualizar la relación con los proveedores incluyendo precio_costo
+        $pivotData = [];
+        foreach ($proveedoresRuc as $index => $ruc) {
+            $pivotData[$ruc] = ['precio_costo' => $preciosCosto[$index] ?? 0];
+        }
+        $producto->proveedores()->sync($pivotData);
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'actualizar',
+            'entidad' => 'Producto',
+            'recurso_id' => $producto->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'message' => 'Producto actualizado correctamente',
                 'producto' => $producto->load(['categoria','proveedores'])
             ]);
         }
-
         return redirect()->route('admin.productos')->with('success', 'Producto actualizado correctamente');
     }
 
@@ -110,14 +145,37 @@ class ProductoController extends Controller
      */
     public function destroy(Producto $producto)
     {
-        $producto->proveedores()->detach();
-        $producto->delete();
-
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json(['message' => 'Producto eliminado correctamente']);
+        try {
+            // SoftDelete - no eliminamos las relaciones, solo marcamos como eliminado
+            $producto->delete();
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'eliminar',
+                'entidad' => 'Producto',
+                'recurso_id' => $producto->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['message' => 'Producto eliminado correctamente']);
+            }
+            return redirect()->route('admin.productos')->with('success', 'Producto eliminado correctamente');
+        } catch (\Exception $e) {
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'eliminar',
+                'entidad' => 'Producto',
+                'recurso_id' => $producto->id,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['error' => 'Error al eliminar el producto: ' . $e->getMessage()], 400);
+            }
+            return back()->with('error', 'Error al eliminar el producto: ' . $e->getMessage());
         }
-
-        return redirect()->route('admin.productos')->with('success', 'Producto eliminado correctamente');
     }
 
     public function datatables(Request $request)
@@ -183,7 +241,7 @@ class ProductoController extends Controller
     }
 
     public function exportPdf(Request $request) {
-        // Construir la consulta base con relaciones
+        // Construir la consulta base con relaciones (solo productos no eliminados)
         $query = \App\Models\Producto::with(['categoria', 'proveedores']);
 
         // Aplicar filtro de categoría si existe
@@ -198,7 +256,7 @@ class ProductoController extends Controller
             });
         }
 
-        // Obtener productos filtrados
+        // Obtener productos filtrados (sin eliminados gracias a SoftDeletes)
         $productos = $query->get();
 
         // Calcular total_vendidos para cada producto
@@ -213,7 +271,7 @@ class ProductoController extends Controller
     }
 
     public function exportExcel(Request $request) {
-        // Construir la consulta base con relaciones
+        // Construir la consulta base con relaciones (solo productos no eliminados)
         $query = \App\Models\Producto::with(['categoria', 'proveedores']);
 
         // Aplicar filtro de categoría si existe
@@ -228,7 +286,7 @@ class ProductoController extends Controller
             });
         }
 
-        // Obtener productos filtrados ordenados por código
+        // Obtener productos filtrados ordenados por código (sin eliminados gracias a SoftDeletes)
         $productos = $query->orderBy('codigo_barras')->get();
 
         // Calcular total_vendidos para cada producto

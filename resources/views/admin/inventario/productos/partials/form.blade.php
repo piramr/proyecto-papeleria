@@ -182,7 +182,7 @@
                 <p class="card-header h5">Proveedores</p>
                 <div class="card-body">
                     <div class="row align-items-end mb-4">
-                        <div class="form-group col-md-5 mb-0">
+                        <div class="form-group col-md-3 mb-0">
                             <select class="form-control" id="selectProveedor">
                                 <option value="">-- Seleccione proveedor --</option>
                                 @foreach ($proveedores as $proveedor)
@@ -204,27 +204,75 @@
                                 <tr>
                                     <th>Proveedor</th>
                                     <th>RUC</th>
+                                    <th width="200px">Precio Costo</th>
                                     <th width="100px" class="text-center">Acción</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @if (isset($producto) && $producto->proveedores->count() > 0)
-                                    @foreach ($producto->proveedores as $proveedor)
-                                        <tr class="proveedor-row" data-ruc="{{ $proveedor->ruc }}">
+                                    @foreach ($producto->proveedores as $index => $proveedor)
+                                        <tr class="proveedor-row" data-ruc="{{ $proveedor->ruc }}" data-precio="{{ $proveedor->pivot->precio_costo ?? 0 }}">
                                             <td>{{ $proveedor->nombre }}</td>
                                             <td>{{ $proveedor->ruc }}</td>
+                                            <td>
+                                                <div class="input-group input-group-sm">
+                                                    <div class="input-group-prepend">
+                                                        <span class="input-group-text">$</span>
+                                                    </div>
+                                                    <input type="number" step="0.01" class="form-control precioCostoRow @error('precioCosto.'.$index) is-invalid @enderror" 
+                                                        name="precioCosto[]" value="{{ $proveedor->pivot->precio_costo ?? 0 }}">
+                                                </div>
+                                                @error('precioCosto.'.$index)
+                                                    <small class="text-danger">{{ $message }}</small>
+                                                @enderror
+                                            </td>
                                             <td class="text-center">
                                                 <button type="button"
                                                     class="btn btn-sm btn-danger btnEliminarProveedor">Eliminar</button>
+                                                <input type="hidden" name="proveedor_ruc[]" value="{{ $proveedor->ruc }}">
+                                                <input type="hidden" name="precio_costo[]" value="{{ $proveedor->pivot->precio_costo }}">
                                             </td>
                                         </tr>
-                                        <input type="hidden" name="proveedor_ruc[]" value="{{ $proveedor->ruc }}">
+                                    @endforeach
+                                @elseif (old('proveedor_ruc'))
+                                    @php
+                                        $oldProveedoresRuc = old('proveedor_ruc', []);
+                                        $oldPreciosCosto = old('precioCosto', []);
+                                    @endphp
+                                    @foreach ($oldProveedoresRuc as $index => $ruc)
+                                        @php
+                                            $proveedor = $proveedores->firstWhere('ruc', $ruc);
+                                        @endphp
+                                        @if ($proveedor)
+                                            <tr class="proveedor-row" data-ruc="{{ $ruc }}" data-precio="{{ $oldPreciosCosto[$index] ?? 0 }}">
+                                                <td>{{ $proveedor->nombre }}</td>
+                                                <td>{{ $ruc }}</td>
+                                                <td>
+                                                    <div class="input-group input-group-sm">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text">$</span>
+                                                        </div>
+                                                        <input type="number" step="0.01" class="form-control precioCostoRow @error('precioCosto.'.$index) is-invalid @enderror" 
+                                                            name="precioCosto[]" value="{{ $oldPreciosCosto[$index] ?? 0 }}">
+                                                    </div>
+                                                    @error('precioCosto.'.$index)
+                                                        <small class="text-danger">{{ $message }}</small>
+                                                    @enderror
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-danger btnEliminarProveedor">Eliminar</button>
+                                                    <input type="hidden" name="proveedor_ruc[]" value="{{ $ruc }}">
+                                                    <input type="hidden" name="precio_costo[]" value="{{ $oldPreciosCosto[$index] ?? 0 }}">
+                                                </td>
+                                            </tr>
+                                        @endif
                                     @endforeach
                                 @endif
                             </tbody>
                         </table>
                         @error('proveedor_ruc')
-                            <span class="text-danger small font-italic">{{ $message }}</span>
+                            <span class="text-danger small font-italic d-block">{{ $message }}</span>
                         @enderror
                     </div>
                 </div>
@@ -273,7 +321,8 @@
         if (select) {
             Array.from(select.options).forEach(option => {
                 if (option.value) {
-                    option.style.display = proveedoresSeleccionados.includes(option.value) ? 'none' : 'block';
+                    // Mostrar todas las opciones, no ocultar las ya seleccionadas
+                    option.style.display = 'block';
                 }
             });
         }
@@ -288,9 +337,18 @@
         forms.forEach(form => {
             const selectProveedor = form.querySelector('#selectProveedor');
             const btnAgregar = form.querySelector('#btnAgregarProveedor');
+            const precioCostoInput = form.querySelector('#precioCostoInput');
             const tabla = form.querySelector('#tablaProveedores');
 
-            if (!tabla || !selectProveedor || !btnAgregar) return;
+            if (!tabla || !selectProveedor || !btnAgregar) {
+                console.warn('Formulario incompleto:', {tabla: !!tabla, selectProveedor: !!selectProveedor, btnAgregar: !!btnAgregar});
+                return;
+            }
+
+            // Si no hay precioCostoInput, lo creamos dinámicamente (para compatibilidad)
+            if (!precioCostoInput) {
+                console.warn('precioCostoInput no encontrado en el formulario');
+            }
 
             const tbody = tabla.querySelector('tbody');
 
@@ -301,36 +359,75 @@
                     e.preventDefault();
                     const ruc = selectProveedor.value;
                     const nombre = selectProveedor.options[selectProveedor.selectedIndex].text;
+                    
+                    // Obtener el input de precio de forma más robusta
+                    const precioInput = form.querySelector('#precioCostoInput');
+                    const precioCosto = precioInput ? precioInput.value : '';
 
                     if (!ruc) {
                         alert('Selecciona un proveedor');
                         return;
                     }
 
-                    if (form.querySelector(`[data-ruc="${ruc}"]`)) {
-                        alert('Este proveedor ya está agregado');
-                        return;
+                    // Verificar si el proveedor ya existe y pregunta si desea reemplazarlo
+                    const existingRow = form.querySelector(`[data-ruc="${ruc}"]`);
+                    if (existingRow) {
+                        if (confirm('Este proveedor ya está asociado. ¿Deseas reemplazarlo?')) {
+                            // Remover el proveedor anterior
+                            const oldRuc = existingRow.dataset.ruc;
+                            existingRow.remove();
+                            const inputRuc = form.querySelector(`input[name="proveedor_ruc[]"][value="${oldRuc}"]`);
+                            if (inputRuc) inputRuc.remove();
+                            
+                            const hiddenRucs = form.querySelectorAll('input[name="proveedor_ruc[]"]');
+                            const index = Array.from(hiddenRucs).findIndex(input => input.value === oldRuc);
+                            if (index !== -1) {
+                                const inputPrecio = form.querySelectorAll('input[name="precio_costo[]"]')[index];
+                                if (inputPrecio) inputPrecio.remove();
+                            }
+                        } else {
+                            return;
+                        }
                     }
 
                     const row = document.createElement('tr');
                     row.className = 'proveedor-row';
                     row.dataset.ruc = ruc;
+                    row.dataset.precio = precioCosto;
                     row.innerHTML = `
                     <td>${nombre.split('(')[0].trim()}</td>
                     <td>${ruc}</td>
                     <td>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">$</span>
+                            </div>
+                            <input type="number" step="0.01" class="form-control precioCostoRow" 
+                                name="precioCosto[]" value="0" placeholder="Ingrese precio">
+                        </div>
+                    </td>
+                    <td class="text-center">
                         <button type="button" class="btn btn-sm btn-danger btnEliminarProveedor">Eliminar</button>
                     </td>
                 `;
+                    
+                    // Agregar los inputs ocultos dentro de la última celda para que se eliminen con la fila
+                    const lastTd = row.querySelector('td:last-child');
+                    const hiddenRuc = document.createElement('input');
+                    hiddenRuc.type = 'hidden';
+                    hiddenRuc.name = 'proveedor_ruc[]';
+                    hiddenRuc.value = ruc;
+                    lastTd.appendChild(hiddenRuc);
+                    
+                    const hiddenPrecio = document.createElement('input');
+                    hiddenPrecio.type = 'hidden';
+                    hiddenPrecio.name = 'precio_costo[]';
+                    hiddenPrecio.value = precioCosto;
+                    lastTd.appendChild(hiddenPrecio);
                     tbody.appendChild(row);
 
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'proveedor_ruc[]';
-                    input.value = ruc;
-                    form.appendChild(input);
-
                     selectProveedor.value = '';
+                    if (precioInput) precioInput.value = '';
                     actualizarSelectProveedores(form);
                 });
                 btnAgregar.dataset.addListener = '1';
@@ -343,15 +440,11 @@
                     if (!btn) return;
 
                     const row = btn.closest('.proveedor-row');
-                    const ruc = row ? row.dataset.ruc : null;
-                    if (row) row.remove();
-
-                    if (ruc) {
-                        const input = form.querySelector(`input[name="proveedor_ruc[]"][value="${ruc}"]`);
-                        if (input) input.remove();
+                    if (row) {
+                        // Los inputs están dentro de la fila, así que se eliminarán automáticamente
+                        row.remove();
+                        actualizarSelectProveedores(form);
                     }
-
-                    actualizarSelectProveedores(form);
                 });
                 tbody.dataset.deleteListener = '1';
             }

@@ -15,4 +15,5 @@ trait PasswordValidationRules
     {
         return ['required', 'string', Password::default()->min(8)->mixedCase()->letters()->numbers()->symbols(), 'confirmed'];
     }
+
 }

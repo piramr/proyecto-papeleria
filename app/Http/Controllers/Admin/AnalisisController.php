@@ -134,13 +134,13 @@ class AnalisisController extends Controller
 
         return DB::table('facturas as f')
             ->select(
-                DB::raw('CONCAT(c.nombres, " ", c.apellidos) as cliente_nombre'),
+                DB::raw("CONCAT(c.nombres, ' ', c.apellidos) as cliente_nombre"),
                 DB::raw('COUNT(*) as total_compras'),
                 DB::raw('SUM(f.total) as monto_total')
             )
             ->join('clientes as c', 'f.cliente_cedula', '=', 'c.cedula')
             ->where('f.created_at', '>=', $hace30Días)
-            ->groupBy('c.cedula')
+            ->groupBy('c.cedula', 'c.nombres', 'c.apellidos')
             ->orderByDesc('total_compras')
             ->limit(5)
             ->get();
@@ -155,15 +155,20 @@ class AnalisisController extends Controller
         $etiquetas = [];
         $mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
+        // Últimos 12 meses
         for ($i = 11; $i >= 0; $i--) {
             $fecha = Carbon::now()->subMonths($i);
-            $mes = $fecha->format('Y-m');
+            $year = $fecha->year;
+            $month = $fecha->month;
+
+            // Suma de totales usando whereYear y whereMonth para compatibilidad
             $total = DB::table('facturas')
-                ->whereRaw('strftime("%Y-%m", created_at) = ?', [$mes])
+                ->whereYear('created_at', $year)
+                ->whereMonth('created_at', $month)
                 ->sum('total');
-            
-            $meses[] = floatval($total ?? 0);
-            $etiquetas[] = $mesesNombres[$fecha->month - 1];
+
+            $meses[] = floatval($total ?? 0);       // Guardamos el total del mes
+            $etiquetas[] = $mesesNombres[$month-1]; // Etiqueta para la gráfica
         }
 
         return [
@@ -171,4 +176,5 @@ class AnalisisController extends Controller
             'datos' => $meses,
         ];
     }
+
 }

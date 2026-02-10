@@ -479,6 +479,12 @@ return [
             'color' => 'white',
             'can'   => 'Empleado',
         ],
+        [
+            'text'  => 'Dashboard',
+            'url'   => '/auditor/dashboard',
+            'icon' => 'fas fa-fw fa-tachometer-alt',
+            'can'  => 'Auditor'
+        ],
 
 
         ['header' => 'account_settings'],
@@ -511,14 +517,14 @@ return [
         ],
         ['header' => 'Sistema'],
         [
-            'text' => 'Auditoria',
+            'text' => 'Auditoría',
             'url'  => 'auditor/auditoria',
             'icon' => 'fas fa-fw fa-eye',
             'can'  => 'Auditor',
         ],
         [
             'text' => 'Logs',
-            'url'  => 'auditor/auditoria',
+            'url'  => 'auditor/logs',
             'icon' => 'fas fa-fw fa-file',
             'can'  => 'Auditor',
         ],

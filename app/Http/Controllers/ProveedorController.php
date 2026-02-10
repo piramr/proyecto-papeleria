@@ -8,29 +8,37 @@ use App\Models\Proveedor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
-class ProveedorController extends Controller {
+
+class ProveedorController extends Controller
+{
 
 
 
     /**
      * Display a listing of the resource.
      */
-    public function index() {
+    public function index()
+    {
         //
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create() {
+    public function create()
+    {
         //
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreProveedorRequest $request) {
+    public function store(StoreProveedorRequest $request)
+    {
         $data = $request->validated();
 
         $proveedor = Proveedor::create([
@@ -42,27 +50,39 @@ class ProveedorController extends Controller {
         ]);
 
         foreach ($data['direcciones'] as $dir) {
+            $dir['proveedor_ruc'] = $proveedor->ruc;
             $proveedor->direcciones()->create($dir);
         }
 
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'crear',
+            'entidad' => 'Proveedor',
+            'recurso_id' => $proveedor->ruc,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         return redirect()
-            ->route('admin.proveedores.index')
+            ->route('admin.proveedores')
             ->with('success', 'Proveedor registrado correctamente');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Proveedor $proveedor) {
+    public function show(Proveedor $proveedor)
+    {
         //
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Proveedor $proveedor) {
+    public function edit(Proveedor $proveedor)
+    {
         $proveedor->load('direcciones');
-        
+
         $html = view('admin.proveedores.partials.form-edit', [
             'proveedor' => $proveedor,
         ])->render();
@@ -73,49 +93,79 @@ class ProveedorController extends Controller {
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateProveedorRequest $request, Proveedor $proveedor) {
-        $data = $request->validated();
 
-        $proveedor->update([
-            'ruc' => $data['ruc'],
-            'nombre' => $data['nombre'],
-            'telefono_principal' => $data['telefono_principal'],
-            'telefono_secundario' => $data['telefono_secundario'] ?? null,
-            'email' => $data['email'],
-        ]);
+    public function update(UpdateProveedorRequest $request, Proveedor $proveedor)
+    {
+        DB::transaction(function () use ($request, $proveedor) {
 
-        if (isset($data['direcciones'])) {
-            $proveedor->direcciones()->delete();
-            foreach ($data['direcciones'] as $dir) {
-                $proveedor->direcciones()->create($dir);
+            // Actualizar proveedor
+            $proveedor->update($request->validated());
+
+            // Direcciones que vienen del form
+            $direccionesRequest = collect($request->input('direcciones', []));
+            $idsRequest = $direccionesRequest->pluck('id')->filter();
+            $idsBD = $proveedor->direcciones()->pluck('id');
+
+            // Detectar direcciones eliminadas
+            $idsEliminar = $idsBD->diff($idsRequest);
+            if ($idsEliminar->isNotEmpty()) {
+                $direccionesAEliminar = $proveedor->direcciones()->whereIn('id', $idsEliminar)->get();
+                foreach ($direccionesAEliminar as $direccion) {
+                    $direccion->delete(); 
+                }
             }
-        }
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'message' => 'Proveedor actualizado correctamente',
-                'proveedor' => $proveedor->load('direcciones')
-            ]);
-        }
+            // Actualizar o crear direcciones
+            foreach ($direccionesRequest as $dir) {
+                if (!empty($dir['id'])) {
+                    $direccion = $proveedor->direcciones()->find($dir['id']);
+                    if ($direccion) {
+                        $direccion->update($dir);
+                    }
+                } else {
+                    $proveedor->direcciones()->create($dir);
+                }
+            }
+        });
 
-        return redirect()->route('admin.proveedores.index')->with('success', 'Proveedor actualizado correctamente');
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'actualizar',
+            'entidad' => 'Proveedor',
+            'recurso_id' => $proveedor->ruc,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
+        return redirect()
+            ->route('admin.proveedores')
+            ->with('success', 'Proveedor actualizado correctamente');
     }
+
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Proveedor $proveedor) {
-        $proveedor->direcciones()->delete();
+    public function destroy(Proveedor $proveedor)
+    {
         $proveedor->delete();
-
+        // Log de operación y sistema
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'eliminar',
+            'entidad' => 'Proveedor',
+            'recurso_id' => $proveedor->ruc,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
         if (request()->ajax() || request()->wantsJson()) {
-            return response()->json(['message' => 'Proveedor eliminado correctamente']);
+            return response()->json(['message' => 'Proveedor desactivado correctamente']);
         }
-
-        return redirect()->route('admin.proveedores.index')->with('success', 'Proveedor eliminado correctamente');
+        return redirect()->route('admin.proveedores')->with('success', 'Proveedor desactivado correctamente');
     }
 
-    public function datatables() {
+    public function datatables()
+    {
         $query = Proveedor::select([
             'ruc',
             'nombre',
@@ -144,8 +194,8 @@ class ProveedorController extends Controller {
             ->addColumn('acciones', function ($proveedor) {
                 return '
                 <div class="d-flex justify-content-center">
-                    <button class="btn btn-sm btn-warning mr-1 btnEditProveedor" data-id="' . $proveedor->ruc . '"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                    <button class="btn btn-sm btn-warning mr-1 btnEditProveedor" data-id="' . $proveedor->ruc . '" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-danger btnDeleteProveedor" data-id="' . $proveedor->ruc . '" data-name="' . e($proveedor->nombre) . '" title="Eliminar"><i class="fas fa-trash"></i></button>
                 </div>
             ';
             })
@@ -153,7 +203,8 @@ class ProveedorController extends Controller {
             ->make(true);
     }
 
-    public function exportPdf() {
+    public function exportPdf()
+    {
         // Obtener todos los proveedores con sus relaciones
         $proveedores = Proveedor::with(['direcciones', 'productos'])->get();
 
@@ -161,7 +212,7 @@ class ProveedorController extends Controller {
         foreach ($proveedores as $proveedor) {
             // Contar compras realizadas
             $proveedor->nro_compras = \App\Models\Pedido::where('proveedor_ruc', $proveedor->ruc)->count();
-            
+
             // Calcular total de gastos en compras
             $proveedor->total_gastos = \App\Models\Pedido::where('proveedor_ruc', $proveedor->ruc)->sum('total');
         }
@@ -172,7 +223,8 @@ class ProveedorController extends Controller {
         return $pdf->stream();
     }
 
-    public function exportExcel() {
+    public function exportExcel()
+    {
         // Obtener todos los proveedores con sus relaciones
         $proveedores = Proveedor::with(['direcciones', 'productos'])->get();
 
@@ -238,7 +290,7 @@ class ProveedorController extends Controller {
             'Gastos en Compras',
             'Fecha de Registro'
         ];
-        
+
         $col = 'A';
         foreach ($headers as $header) {
             $sheet->setCellValue($col . '1', $header);
@@ -259,7 +311,7 @@ class ProveedorController extends Controller {
             $sheet->setCellValue('D' . $row, $proveedor->email);
             $sheet->setCellValue('E' . $row, $proveedor->telefono_principal);
             $sheet->setCellValue('F' . $row, $proveedor->telefono_secundario ?? '-');
-            
+
             // Direcciones
             if ($proveedor->direcciones->isEmpty()) {
                 $sheet->setCellValue('G' . $row, 'Sin direcciones');
@@ -276,25 +328,27 @@ class ProveedorController extends Controller {
                 }
                 $sheet->setCellValue('G' . $row, implode('; ', $direcciones));
             }
-            
+
             // Productos ofrecidos
             if ($proveedor->productos->isEmpty()) {
                 $sheet->setCellValue('H' . $row, 'Sin productos');
             } else if ($proveedor->productos->count() > 1) {
                 $productosNombres = $proveedor->productos->pluck('nombre')->toArray();
-                $productosConVinetas = array_map(function($nombre) { return '• ' . $nombre; }, $productosNombres);
+                $productosConVinetas = array_map(function ($nombre) {
+                    return '• ' . $nombre;
+                }, $productosNombres);
                 $sheet->setCellValue('H' . $row, implode("\n", $productosConVinetas));
             } else {
                 $productosNombres = $proveedor->productos->pluck('nombre')->toArray();
                 $sheet->setCellValue('H' . $row, implode(', ', $productosNombres));
             }
-            
+
             // Número de compras
             $sheet->setCellValue('I' . $row, $proveedor->nro_compras);
-            
+
             // Gastos en compras
             $sheet->setCellValue('J' . $row, $proveedor->total_gastos ?? 0);
-            
+
             // Fecha de registro
             $sheet->setCellValue('K' . $row, $proveedor->created_at->format('d-m-Y H:i'));
 
@@ -319,7 +373,7 @@ class ProveedorController extends Controller {
 
         // Crear el archivo Excel
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        
+
         // Generar nombre del archivo
         $timestamp = now()->format('Y-m-d_H-i-s');
         $filename = 'Proveedores_' . $timestamp . '.xlsx';

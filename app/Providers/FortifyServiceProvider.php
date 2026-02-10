@@ -13,6 +13,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
 use Laravel\Fortify\Fortify;
+use App\Services\Auditoria\AuditoriaService;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -106,6 +107,17 @@ class FortifyServiceProvider extends ServiceProvider
                         'is_active' => false,
                         'inactivated_at' => now(),
                     ])->save();
+                    
+                    // Registrar bloqueo de usuario en log_login
+                    AuditoriaService::registrarLogLogin([
+                        'user_email' => $user->email,
+                        'user_id' => $user->id,
+                        'resultado' => 'USUARIO_BLOQUEADO',
+                        'host' => $request->ip(),
+                        'dispositivo' => $request->header('User-Agent'),
+                        'ubicacion' => null,
+                        'reintento' => RateLimiter::attempts($key),
+                    ]);
                  }
 
                  throw \Illuminate\Validation\ValidationException::withMessages([

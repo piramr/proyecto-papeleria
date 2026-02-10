@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class TipoPago extends Model {
     use HasFactory;
 
-    protected $table = 'tipos_pago';
+    protected $table = 'tipo_pagos';
 
     protected $fillable = [
         'nombre',

@@ -28,7 +28,14 @@ class Cliente extends Model {
     /**
      * Relaciona pedidos del cliente
      */
-    public function facturas() {
+    public function pedidos() {
         return $this->hasMany(Pedido::class, 'cliente_cedula', 'cedula');
+    }
+
+    /**
+     * Relaciona facturas del cliente
+     */
+    public function facturas() {
+        return $this->hasMany(Factura::class, 'cliente_cedula', 'cedula');
     }
 }

@@ -11,6 +11,8 @@ use App\Models\Ajuste;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 use Carbon\Carbon;
 
 class VentasController extends Controller
@@ -90,7 +92,7 @@ class VentasController extends Controller
     public function store(Request $request)
     {
         Log::info('VentasController@store iniciado', [
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'payload' => $request->all(),
         ]);
 
@@ -102,7 +104,7 @@ class VentasController extends Controller
             'cliente_email' => 'nullable|email|max:100',
             'cliente_telefono' => 'nullable|string|max:20',
             'cliente_fecha_nacimiento' => 'nullable|date|before:today',
-            'tipo_pago_id' => 'required|exists:tipos_pago,id',
+            'tipo_pago_id' => 'required|exists:tipo_pagos,id',
             'consumidor_final' => 'nullable|boolean',
             'productos' => 'required|array',
             'productos.*.id' => 'required|exists:productos,id',
@@ -211,7 +213,7 @@ class VentasController extends Controller
                 'numero_factura' => $validated['numero_factura'],
                 'fecha_hora' => now(),
                 'cliente_cedula' => $cliente->cedula,
-                'usuario_id' => auth()->id(),
+                'usuario_id' => Auth::id(),
                 'tipo_pago_id' => $validated['tipo_pago_id'],
                 'subtotal' => $subtotal,
                 'iva' => $iva,
@@ -243,7 +245,16 @@ class VentasController extends Controller
             }
 
             DB::commit();
-            
+            // Registrar log de operación: venta registrada correctamente
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'crear',
+                'entidad' => 'Factura',
+                'recurso_id' => $factura->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
+
             $redirect = redirect()->route('admin.ventas.show', $factura->id)
                 ->with('success', 'Venta registrada correctamente. Factura #' . $factura->numero_factura);
 
@@ -255,6 +266,15 @@ class VentasController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            // Registrar log de operación: error al registrar venta
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'crear',
+                'entidad' => 'Factura',
+                'recurso_id' => null,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
             Log::error('Error al procesar venta', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),

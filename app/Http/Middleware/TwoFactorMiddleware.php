@@ -22,6 +22,13 @@ class TwoFactorMiddleware
         if ($user) {
             // 2. Check if verified
             if (!$request->session()->has('two_factor_verified')) {
+                if ($request->is('/')) {
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+                    return redirect('/');
+                }
+
                 // Allow access to 2fa routes and logout
                 if ($request->is('two-factor-auth*') || $request->is('logout') || $request->is('email/*')) {
                     return $next($request);

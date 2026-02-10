@@ -18,6 +18,10 @@ class DatabaseSeeder extends Seeder
         // Seeders para datos base
         $this->call([
             TipoPagoSeeder::class,
+            CompraSeeder::class,
+            RoleAndPermissionSeeder::class,
+            SecurityQuestionsSeeder::class,
+
         ]);
 
         // User::factory(10)->create();
@@ -25,6 +29,12 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
+        ]);
+
+        $this->call([
+            AuditoriaTipoOperacionSeeder::class,
+            LogLoginResultadosSeeder::class,
+            LogNivelSeeder::class
         ]);
     }
 }

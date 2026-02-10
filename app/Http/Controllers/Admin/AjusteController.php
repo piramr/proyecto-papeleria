@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Ajuste;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
 class AjusteController extends Controller
 {
@@ -33,7 +35,7 @@ class AjusteController extends Controller
             'prefijo_factura' => 'nullable|string|max:20',
             'siguiente_factura' => 'nullable|integer|min:1',
             'secuencial_digitos' => 'nullable|integer|min:1|max:12',
-            'tipo_pago_default_id' => 'nullable|exists:tipos_pago,id',
+            'tipo_pago_default_id' => 'nullable|exists:tipo_pagos,id',
             'stock_minimo' => 'nullable|integer|min:0|max:9999',
             'stock_alerta_habilitada' => 'nullable|boolean',
             'notif_stock_bajo' => 'nullable|boolean',
@@ -61,14 +63,45 @@ class AjusteController extends Controller
 
         // Procesar subida de logo
         if ($request->hasFile('logo_file')) {
-            $file = $request->file('logo_file');
-            $filename = 'logo_' . time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('images'), $filename);
-            $data['logo_url'] = '/images/' . $filename;
+            try {
+                $file = $request->file('logo_file');
+                $filename = 'logo_' . time() . '.' . $file->getClientOriginalExtension();
+                $file->move(public_path('images'), $filename);
+                $data['logo_url'] = '/images/' . $filename;
+            } catch (\Exception $e) {
+                // Log de sistema: error de almacenamiento
+                AuditoriaService::registrarLogSistema('ERROR', '[ALMACENAMIENTO] Error al guardar el logo del sistema: ' . $e->getMessage() . '. Posible falta de espacio en disco o permisos insuficientes.');
+                return back()->with('error', 'No se pudo guardar el logo. Verifique el espacio en disco, permisos o memoria disponible.');
+            }
         }
 
         $ajuste->update($data);
-
+        
+        // Construir mensaje descriptivo de cambios
+        $cambios = [];
+        if (isset($data['iva_porcentaje'])) $cambios[] = 'IVA: ' . $data['iva_porcentaje'] . '%';
+        if (isset($data['empresa_nombre'])) $cambios[] = 'Empresa: ' . $data['empresa_nombre'];
+        if (isset($data['stock_minimo'])) $cambios[] = 'Stock mínimo: ' . $data['stock_minimo'];
+        if (isset($data['prefijo_factura'])) $cambios[] = 'Prefijo factura: ' . $data['prefijo_factura'];
+        if (isset($data['logo_url']) && $request->hasFile('logo_file')) $cambios[] = 'Logo actualizado';
+        
+        // Log de operación
+        AuditoriaService::registrarOperacion([
+            'user_id' => Auth::id(),
+            'tipo_operacion' => 'actualizar',
+            'entidad' => 'Ajuste',
+            'recurso_id' => $ajuste->id,
+            'resultado' => 'exitoso',
+            'mensaje_error' => null,
+        ]);
+        
+        // Log de sistema: cambios de configuración
+        $mensajeSistema = '[CONFIGURACIÓN] Parámetros del sistema actualizados';
+        if (!empty($cambios)) {
+            $mensajeSistema .= ': ' . implode(', ', $cambios);
+        }
+        AuditoriaService::registrarLogSistema('WARNING', $mensajeSistema);
+        
         return redirect()->route('admin.ajustes')
             ->with('success', 'Ajustes actualizados correctamente.');
     }
