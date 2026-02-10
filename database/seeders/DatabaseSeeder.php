@@ -37,8 +37,10 @@ class DatabaseSeeder extends Seeder
             LogNivelSeeder::class
         ]);
     
-       $this->call([
-           InventarioSeeder::class,
-      ]);
+
+    //    $this->call([
+    //        InventarioSeeder::class,
+    //   ]);
+
     }
 }
