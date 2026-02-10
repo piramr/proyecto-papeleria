@@ -68,9 +68,9 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="tipo_pago_id">Tipo de Pago</label>
+                            <label for="tipo_pago_id">Tipo de Pago <span class="text-danger">*</span></label>
                             <select class="form-control @error('tipo_pago_id') is-invalid @enderror" 
-                                    id="tipo_pago_id" name="tipo_pago_id">
+                                    id="tipo_pago_id" name="tipo_pago_id" required>
                                 <option value="">-- Seleccionar Tipo de Pago --</option>
                                 @foreach($tiposPago as $tipo)
                                     <option value="{{ $tipo->id }}" {{ $compra->tipo_pago_id == $tipo->id ? 'selected' : '' }}>

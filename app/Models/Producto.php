@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Producto extends Model {
+
+    use SoftDeletes;
 
     protected $fillable = [
         'codigo_barras',
@@ -36,6 +39,7 @@ class Producto extends Model {
     }
 
     public function proveedores() {
-        return $this->belongsToMany(Proveedor::class, 'producto_proveedores', 'producto_id', 'proveedor_ruc', 'id', 'ruc');
+        return $this->belongsToMany(Proveedor::class, 'producto_proveedores', 'producto_id', 'proveedor_ruc', 'id', 'ruc')
+            ->withPivot('precio_costo');
     }
 }

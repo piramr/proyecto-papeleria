@@ -5,6 +5,7 @@ use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\AlertasController;
+use App\Http\Controllers\ReportesController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VentasController;
@@ -70,7 +71,17 @@ Route::middleware([
     Route::get('/categorias', fn() => view('admin.inventario.categorias.index'))->name('categorias');
     Route::get('/proveedores', fn() => view('admin.proveedores.index'))->name('proveedores');
     Route::resource('clientes', \App\Http\Controllers\Admin\ClienteController::class);
-    Route::get('/reportes', fn() => view('admin.reportes.index'))->name('reportes');
+    
+    // ✅ Rutas para reportes
+    Route::prefix('reportes')->name('reportes.')->group(function () {
+        Route::get('/', [ReportesController::class, 'index'])->name('index');
+        Route::get('ventas/pdf', [ReportesController::class, 'ventasPdf'])->name('ventas.pdf');
+        Route::get('ventas/excel', [ReportesController::class, 'ventasExcel'])->name('ventas.excel');
+        Route::get('compras/pdf', [ReportesController::class, 'comprasPdf'])->name('compras.pdf');
+        Route::get('compras/excel', [ReportesController::class, 'comprasExcel'])->name('compras.excel');
+        Route::get('ganancias/excel', [ReportesController::class, 'gananciasExcel'])->name('ganancias.excel');
+        Route::get('inventario/excel', [ReportesController::class, 'inventarioExcel'])->name('inventario.excel');
+    });
 
     // ✅ Rutas para compras (módulo)
     Route::prefix('compras')->name('compras.')->group(function () {
@@ -107,7 +118,7 @@ Route::middleware([
 
     // ===================== SOLO ADMIN =====================
     Route::middleware(['role:Admin'])->group(function () {
-        Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
+        Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
         Route::get('/perfil', fn() => view('admin.perfil.index'))->name('perfil');
         Route::get('/ajustes', [AjusteController::class, 'index'])->name('ajustes');
         Route::put('/ajustes', [AjusteController::class, 'update'])->name('ajustes.update');
@@ -134,6 +145,7 @@ Route::middleware([
     Route::get('/productos/export-pdf', [ProductoController::class, 'exportPdf'])->name('productos.export-pdf');
     Route::get('/productos/export-excel', [ProductoController::class, 'exportExcel'])->name('productos.export-excel');
     Route::post('/productos', [ProductoController::class, 'store'])->name('productos.store');
+    Route::get('/productos/{producto}', [ProductoController::class, 'show'])->name('productos.show');
     Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
     Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
@@ -164,7 +176,17 @@ Route::middleware([
     'verified',
     'role:Auditor',
 ])->prefix('auditor')->name('auditor.')->group(function () {
-    Route::get('/dashboard', fn() => view('auditor.dashboard'))->name('dashboard');
-    Route::get('/auditoria', fn() => view('auditoria.index'))->name('auditoria');
-    Route::get('/ajustes', fn() => view('auditor.settings'))->name('ajustes');
+    Route::get('/dashboard', [\App\Http\Controllers\Auditor\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/auditoria', [\App\Http\Controllers\Auditor\AuditoriaController::class, 'index'])->name('auditoria');
+    Route::get('/logs', [\App\Http\Controllers\Auditor\LogsController::class, 'index'])->name('logs');
+    Route::get('/ajustes', [\App\Http\Controllers\Auditor\AjustesController::class, 'index'])->name('ajustes');
+    Route::put('/ajustes', [\App\Http\Controllers\Auditor\AjustesController::class, 'update'])->name('ajustes.update');
+    Route::post('/ajustes/limpiar/{tipo}', [\App\Http\Controllers\Auditor\AjustesController::class, 'limpiarLog'])->name('ajustes.limpiar');
+    // APIs para actualización en tiempo real
+    Route::get('/api/dashboard', [\App\Http\Controllers\Auditor\DashboardController::class, 'apiStats'])->name('api.dashboard');
+    Route::get('/api/logs', [\App\Http\Controllers\Auditor\LogsController::class, 'apiLogs'])->name('api.logs');
+    Route::get('/api/likert', [\App\Http\Controllers\Auditor\LogsController::class, 'apiLikert'])->name('api.likert');
+    Route::get('/api/auditoria', [\App\Http\Controllers\Auditor\AuditoriaController::class, 'apiAuditoria'])->name('api.auditoria');
+    Route::get('/api/auditoria/chart', [\App\Http\Controllers\Auditor\AuditoriaController::class, 'apiChartData'])->name('api.auditoria.chart');
+    Route::get('/api/ajustes/stats', [\App\Http\Controllers\Auditor\AjustesController::class, 'apiStats'])->name('api.ajustes.stats');
 });

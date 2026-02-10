@@ -16,6 +16,16 @@
 @stop
 
 @section('content')
+    @if (session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <h4><i class="icon fas fa-ban"></i> Error</h4>
+            <p class="mb-0">{{ session('error') }}</p>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    @endif
+
     @if ($errors->any())
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
             <h4><i class="icon fas fa-ban"></i> Errores de validación</h4>
@@ -67,9 +77,9 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="tipo_pago_id">Tipo de Pago</label>
+                            <label for="tipo_pago_id">Tipo de Pago <span class="text-danger">*</span></label>
                             <select class="form-control @error('tipo_pago_id') is-invalid @enderror" 
-                                    id="tipo_pago_id" name="tipo_pago_id">
+                                    id="tipo_pago_id" name="tipo_pago_id" required>
                                 <option value="">-- Seleccionar Tipo de Pago --</option>
                                 @foreach($tiposPago as $tipo)
                                     <option value="{{ $tipo->id }}" {{ old('tipo_pago_id') == $tipo->id ? 'selected' : '' }}>

@@ -17,5 +17,10 @@ class TipoPagoSeeder extends Seeder
             'nombre' => 'Efectivo',
             'descripcion' => 'Pago en efectivo',
         ]);
+
+        TipoPago::create([
+            'nombre' => 'Transferencia',
+            'descripcion' => 'Pago por transferencia bancaria',
+        ]);
     }
 }

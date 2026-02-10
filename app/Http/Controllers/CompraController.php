@@ -9,6 +9,8 @@ use App\Models\Producto;
 use App\Models\TipoPago;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Services\Auditoria\AuditoriaService;
 
 class CompraController extends Controller {
     /**
@@ -36,18 +38,18 @@ class CompraController extends Controller {
      * Store a newly created compra in storage
      */
     public function store(Request $request) {
-        $validated = $request->validate([
-            'proveedor_ruc' => 'required|exists:proveedores,ruc',
-            'fecha_compra' => 'required|date',
-            'tipo_pago_id' => 'nullable|exists:tipo_pagos,id',
-            'descripcion' => 'nullable|string',
-            'detalles' => 'required|array|min:1',
-            'detalles.*.producto_id' => 'required|exists:productos,id',
-            'detalles.*.cantidad' => 'required|integer|min:1',
-            'detalles.*.precio_unitario' => 'required|numeric|min:0.01',
-        ]);
-
         try {
+            $validated = $request->validate([
+                'proveedor_ruc' => 'required|exists:proveedores,ruc',
+                'fecha_compra' => 'required|date',
+                'tipo_pago_id' => 'required|exists:tipo_pagos,id',
+                'descripcion' => 'nullable|string',
+                'detalles' => 'required|array|min:1',
+                'detalles.*.producto_id' => 'required|exists:productos,id',
+                'detalles.*.cantidad' => 'required|integer|min:1',
+                'detalles.*.precio_unitario' => 'required|numeric|min:0.01',
+            ]);
+
             DB::beginTransaction();
 
             // Validar que todos los productos pertenecen al mismo proveedor
@@ -56,6 +58,9 @@ class CompraController extends Controller {
                 $request->input('detalles')
             );
 
+            // Validar que la cantidad no supere el stock máximo
+            $this->validarStockMaximo($request->input('detalles'));
+
             // Crear compra
             $compra = Compra::create([
                 'numero_compra' => Compra::generarNumeroCompra(),
@@ -63,7 +68,7 @@ class CompraController extends Controller {
                 'proveedor_ruc' => $request->proveedor_ruc,
                 'descripcion' => $request->descripcion,
                 'tipo_pago_id' => $request->tipo_pago_id,
-                'usuario_id' => auth()->id(),
+                'usuario_id' => Auth::id(),
                 'estado' => 'pendiente',
             ]);
 
@@ -71,7 +76,6 @@ class CompraController extends Controller {
             foreach ($request->input('detalles') as $detalle) {
                 $producto = Producto::findOrFail($detalle['producto_id']);
                 $subtotal = $detalle['cantidad'] * $detalle['precio_unitario'];
-
                 CompraDetalle::create([
                     'compra_id' => $compra->id,
                     'producto_id' => $detalle['producto_id'],
@@ -80,18 +84,33 @@ class CompraController extends Controller {
                     'subtotal' => $subtotal,
                 ]);
             }
-
             // Calcular totales
             $compra->calcularTotal();
-
             DB::commit();
-
-            return redirect()->route('compras.show', $compra->id)
-                ->with('success', 'Compra creada exitosamente. Número: ' . $compra->numero_compra);
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'crear',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
+            return redirect()->route('admin.compras.show', $compra->id)
+                ->with('success', 'Compra realizada exitosamente. Número de compra: ' . $compra->numero_compra);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error al crear la compra: ' . $e->getMessage())
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'crear',
+                'entidad' => 'Compra',
+                'recurso_id' => null,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
+            return back()->withErrors(['error' => $e->getMessage()])
                 ->withInput();
         }
     }
@@ -130,7 +149,7 @@ class CompraController extends Controller {
         $this->validate($request, [
             'proveedor_ruc' => 'required|exists:proveedores,ruc',
             'fecha_compra' => 'required|date',
-            'tipo_pago_id' => 'nullable|exists:tipo_pagos,id',
+            'tipo_pago_id' => 'required|exists:tipo_pagos,id',
             'descripcion' => 'nullable|string',
             'detalles' => 'required|array|min:1',
             'detalles.*.producto_id' => 'required|exists:productos,id',
@@ -146,6 +165,9 @@ class CompraController extends Controller {
                 $request->input('proveedor_ruc'),
                 $request->input('detalles')
             );
+
+            // Validar que la cantidad no supere el stock máximo
+            $this->validarStockMaximo($request->input('detalles'));
 
             // Actualizar compra
             $compra->update([
@@ -176,11 +198,29 @@ class CompraController extends Controller {
 
             DB::commit();
 
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'actualizar',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
             return redirect()->route('compras.show', $compra->id)
                 ->with('success', 'Compra actualizada exitosamente');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'actualizar',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
             return back()->with('error', 'Error al actualizar la compra: ' . $e->getMessage())
                 ->withInput();
         }
@@ -212,10 +252,28 @@ class CompraController extends Controller {
 
             DB::commit();
 
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'recibir',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
             return back()->with('success', 'Compra marcada como recibida. Stock actualizado.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'recibir',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
             return back()->with('error', 'Error al recibir la compra: ' . $e->getMessage());
         }
     }
@@ -238,9 +296,27 @@ class CompraController extends Controller {
                 'observaciones' => $request->razon,
             ]);
 
+            // Log de operación y sistema
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'cancelar',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'exitoso',
+                'mensaje_error' => null,
+            ]);
             return back()->with('success', 'Compra cancelada exitosamente');
 
         } catch (\Exception $e) {
+            // Log de operación y sistema en caso de error
+            AuditoriaService::registrarOperacion([
+                'user_id' => Auth::id(),
+                'tipo_operacion' => 'cancelar',
+                'entidad' => 'Compra',
+                'recurso_id' => $compra->id,
+                'resultado' => 'fallido',
+                'mensaje_error' => $e->getMessage(),
+            ]);
             return back()->with('error', 'Error al cancelar la compra: ' . $e->getMessage());
         }
     }
@@ -303,6 +379,25 @@ class CompraController extends Controller {
             if (!$existe) {
                 throw new \Exception(
                     "El producto '{$producto->nombre}' no es suministrado por este proveedor."
+                );
+            }
+        }
+    }
+
+    /**
+     * Validar que la cantidad no supere el stock máximo de cada producto
+     */
+    private function validarStockMaximo($detalles) {
+        foreach ($detalles as $detalle) {
+            $producto = Producto::findOrFail($detalle['producto_id']);
+            $cantidadCompra = $detalle['cantidad'];
+            $stockActual = $producto->cantidad_stock;
+            $nuevoStock = $stockActual + $cantidadCompra;
+
+            if ($nuevoStock > $producto->stock_maximo) {
+                throw new \Exception(
+                    "El producto '{$producto->nombre}' no puede tener más de {$producto->stock_maximo} unidades en stock. " .
+                    "Stock actual: {$stockActual}, cantidad a comprar: {$cantidadCompra}, total resultaría en: {$nuevoStock}."
                 );
             }
         }

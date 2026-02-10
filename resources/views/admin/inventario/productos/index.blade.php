@@ -181,6 +181,7 @@
                         // Clear previous errors
                         $form.find('.is-invalid').removeClass('is-invalid');
                         $form.find('.invalid-feedback.dynamic-error, .text-danger.dynamic-error').remove();
+                        $form.find('.js-error[data-error-for]').text('');
 
                         const formData = new FormData(this);
                         const actionUrl = $form.attr('action');
@@ -204,11 +205,20 @@
                                 if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                                     const errors = xhr.responseJSON.errors;
 
+
                                     Object.keys(errors).forEach(function(field) {
                                         const baseField = field.replace(/\..*$/, '');
                                         const message = errors[field][0];
                                         let $input = $form.find('[name="' + field + '"]');
-                                        
+
+                                        if ($input.length === 0 && field.startsWith('precioCosto.')) {
+                                            const idx = parseInt(field.split('.')[1], 10);
+                                            const $inputs = $form.find('input[name="precioCosto[]"]');
+                                            if (!isNaN(idx) && $inputs.eq(idx).length) {
+                                                $input = $inputs.eq(idx);
+                                            }
+                                        }
+
                                         if ($input.length === 0) {
                                             $input = $form.find('[name="' + baseField + '"]');
                                         }
@@ -220,23 +230,47 @@
                                             $input.addClass('is-invalid');
                                             
                                             // Determinar tipo de elemento de error según el campo (igual que Blade)
-                                            if (baseField === 'precio_unitario' || baseField === 'precio_oferta') {
+                                            if (baseField === 'precioCosto') {
+                                                // Para precio_costo: siempre debajo del input-group (por fila)
+                                                if (field.indexOf('.') !== -1 && $input.length) {
+                                                    const $target = $input.closest('.input-group').length ? $input.closest('.input-group') : $input;
+                                                    $('<small class="text-danger dynamic-error"></small>').text(message).insertAfter($target);
+                                                } else {
+                                                    const $inputs = $form.find('input[name="precioCosto[]"]');
+                                                    if ($inputs.length) {
+                                                        $inputs.each(function() {
+                                                            const $rowInput = $(this);
+                                                            const $target = $rowInput.closest('.input-group').length ? $rowInput.closest('.input-group') : $rowInput;
+                                                            $('<small class="text-danger dynamic-error"></small>').text(message).insertAfter($target);
+                                                        });
+                                                    }
+                                                }
+                                            } else if (baseField === 'precio_unitario' || baseField === 'precio_oferta') {
                                                 // Para precios: <small class="text-danger"> después del input-group o input
                                                 const $target = $input.closest('.input-group').length ? $input.closest('.input-group') : $input;
                                                 $('<small class="text-danger dynamic-error d-block"></small>').text(message).insertAfter($target);
                                             } else if (baseField === 'proveedor_ruc') {
-                                                // Para proveedores: <span class="text-danger small font-italic"> después de la tabla
-                                                const $table = $form.find('#tablaProveedores');
-                                                if ($table.length) {
-                                                    $('<span class="text-danger small font-italic dynamic-error d-block"></span>').text(message).insertAfter($table);
+                                                // Para proveedores: usar el contenedor del partial
+                                                const $slot = $form.find('.js-error[data-error-for="proveedor_ruc"]');
+                                                if ($slot.length) {
+                                                    $slot.text(message);
+                                                }
+                                            } else if (baseField === 'precioCosto') {
+                                                // Error general de precios de costo: usar el contenedor del partial
+                                                const $slot = $form.find('.js-error[data-error-for="precioCosto"]');
+                                                if ($slot.length) {
+                                                    $slot.text(message);
                                                 }
                                             } else {
                                                 // Para campos normales: <span class="invalid-feedback"> después del input
                                                 $('<span class="invalid-feedback dynamic-error"></span>').text(message).insertAfter($input);
                                             }
-                                        } else {
-                                            // Fallback general error at top of modal body
-                                            $('<div class="alert alert-danger dynamic-error mb-2"></div>').text(message).prependTo('#contenidoModal');
+                                        } else if (baseField === 'proveedor_ruc') {
+                                            // Si no existen inputs (tabla vacía), mostrar el error debajo de la tabla
+                                            const $table = $form.find('#tablaProveedores');
+                                            if ($table.length) {
+                                                $('<span class="text-danger small font-italic dynamic-error d-block"></span>').text(message).insertAfter($table);
+                                            }
                                         }
                                     });
                                 } else {
@@ -408,6 +442,83 @@
                 window.location.href = url;
             });
 
+            // Ver/Mostrar producto
+            $(document).on('click', '.btnShowProducto', function() {
+                const productoId = $(this).data('id');
+
+                $.ajax({
+                    url: '{{ route("admin.productos.show", ":id") }}'.replace(':id', productoId),
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(data) {
+                        // Si es JSON, mostrar en una modal de visualización
+                        if (data.id) {
+                            let proveedoresHtml = '';
+                            if (data.proveedores && data.proveedores.length > 0) {
+                                proveedoresHtml = '<ul>';
+                                data.proveedores.forEach(prov => {
+                                    proveedoresHtml += '<li>' + prov.nombre + ' (Precio costo: $' + parseFloat(prov.pivot.precio_costo).toFixed(2) + ')</li>';
+                                });
+                                proveedoresHtml += '</ul>';
+                            } else {
+                                proveedoresHtml = '<p class="text-muted">Sin proveedores asociados</p>';
+                            }
+
+                            let modal = `
+                                <div class="modal fade" id="modalVerProducto" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog modal-lg" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-info">
+                                                <h5 class="modal-title">Detalles del Producto</h5>
+                                                <button type="button" class="close text-white" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <p><strong>Código:</strong> ${data.codigo_barras}</p>
+                                                        <p><strong>Nombre:</strong> ${data.nombre}</p>
+                                                        <p><strong>Marca:</strong> ${data.marca}</p>
+                                                        <p><strong>Categoría:</strong> ${data.categoria ? data.categoria.nombre : 'N/A'}</p>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <p><strong>Stock Actual:</strong> ${data.cantidad_stock}</p>
+                                                        <p><strong>Stock Mínimo:</strong> ${data.stock_minimo}</p>
+                                                        <p><strong>Stock Máximo:</strong> ${data.stock_maximo}</p>
+                                                        <p><strong>Precio Unitario:</strong> $${parseFloat(data.precio_unitario).toFixed(2)}</p>
+                                                    </div>
+                                                </div>
+                                                <hr>
+                                                <p><strong>Características:</strong></p>
+                                                <p class="text-muted">${data.caracteristicas || 'N/A'}</p>
+                                                <hr>
+                                                <p><strong>Proveedores:</strong></p>
+                                                ${proveedoresHtml}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+
+                            $('body').append(modal);
+                            $('#modalVerProducto').modal('show');
+                            $('#modalVerProducto').on('hidden.bs.modal', function() {
+                                $(this).remove();
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                        console.error('Response:', xhr.responseText);
+                        alert('Error al cargar los detalles del producto');
+                    }
+                });
+            });
+
             // Editar producto
             $(document).on('click', '.btnEditProducto', function() {
                 const productoId = $(this).data('id');
@@ -441,7 +552,7 @@
                 if (confirm('¿Estás seguro de que deseas eliminar el producto "' + productoNombre +
                         '"? Esta acción no se puede deshacer.')) {
                     $.ajax({
-                        url: '/productos/' + productoId,
+                        url: '{{ route("admin.productos.destroy", ":id") }}'.replace(':id', productoId),
                         type: 'DELETE',
                         headers: {
                             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -451,8 +562,14 @@
                             // Mostrar alerta de éxito
                             alert('Producto eliminado correctamente');
                         },
-                        error: function() {
-                            alert('Error al eliminar el producto');
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            console.error('Response:', xhr.responseText);
+                            let errorMsg = 'Error al eliminar el producto';
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                errorMsg = xhr.responseJSON.error;
+                            }
+                            alert(errorMsg);
                         }
                     });
                 }
