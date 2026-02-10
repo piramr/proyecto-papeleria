@@ -81,6 +81,14 @@ class VentasController extends Controller
         if (!empty($ajuste->prefijo_factura) && !empty($ajuste->siguiente_factura)) {
             $digitos = $ajuste->secuencial_digitos ?? 9;
             $sugerenciaFactura = $ajuste->prefijo_factura . str_pad((string) $ajuste->siguiente_factura, $digitos, '0', STR_PAD_LEFT);
+        } elseif (!empty($ultimaFactura)) {
+            $matches = [];
+            if (preg_match('/^(\d{3}-\d{3}-)(\d+)$/', $ultimaFactura, $matches)) {
+                $prefijo = $matches[1];
+                $numero = $matches[2];
+                $siguiente = str_pad((string) ((int) $numero + 1), strlen($numero), '0', STR_PAD_LEFT);
+                $sugerenciaFactura = $prefijo . $siguiente;
+            }
         }
 
         return view('admin.ventas.create', compact('clientes', 'productos', 'tiposPago', 'ivaPorcentaje', 'ultimaFactura', 'ajuste', 'sugerenciaFactura'));
