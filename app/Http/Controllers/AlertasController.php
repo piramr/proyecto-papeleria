@@ -30,9 +30,9 @@ class AlertasController extends Controller
     {
         $ajuste = Ajuste::getOrCreate();
         $stockMinimo = $ajuste->stock_minimo ?? 4;
-        $habilitarAlertas = $ajuste->habilitar_alertas_stock ?? true;
 
-        if (!$habilitarAlertas) {
+        // Verificar que las notificaciones de stock bajo estén habilitadas
+        if (!Ajuste::notificacionesStockBajoHabilitadas()) {
             return response()->json([
                 'alertas' => [],
                 'total' => 0,
@@ -59,12 +59,11 @@ class AlertasController extends Controller
     {
         $ajuste = Ajuste::getOrCreate();
         $stockMinimo = $ajuste->stock_minimo ?? 4;
-        $habilitarAlertas = $ajuste->habilitar_alertas_stock ?? true;
 
         $notificaciones = [];
 
-        // Alertas de stock bajo
-        if ($habilitarAlertas) {
+        // Alertas de stock bajo - Solo mostrar si las notificaciones están habilitadas
+        if (Ajuste::notificacionesStockBajoHabilitadas()) {
             $productosStockBajo = Producto::where('cantidad_stock', '<=', $stockMinimo)
                 ->orderBy('cantidad_stock', 'asc')
                 ->get();
@@ -81,6 +80,11 @@ class AlertasController extends Controller
                 ];
             }
         }
+
+        // Aquí se pueden agregar más tipos de notificaciones en el futuro
+        // Por ejemplo:
+        // if (Ajuste::notificacionesVentaHabilitadas()) { ... }
+        // if (Ajuste::notificacionesCompraHabilitadas()) { ... }
 
         return response()->json([
             'notificaciones' => $notificaciones,

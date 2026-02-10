@@ -3,11 +3,23 @@
 namespace App\Notifications;
 
 use App\Models\Producto;
+use App\Models\Ajuste;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
+/**
+ * Notificación de stock bajo
+ * 
+ * IMPORTANTE: Antes de enviar esta notificación, verificar que las notificaciones 
+ * estén habilitadas usando: Ajuste::notificacionesStockBajoHabilitadas()
+ * 
+ * Ejemplo de uso:
+ * if (Ajuste::notificacionesStockBajoHabilitadas()) {
+ *     $user->notify(new LowStockNotification($producto, $stockMinimo));
+ * }
+ */
 class LowStockNotification extends Notification implements ShouldQueue
 {
     use Queueable;
