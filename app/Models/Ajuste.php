@@ -39,4 +39,31 @@ class Ajuste extends Model
     {
         return (float) static::getOrCreate()->iva_porcentaje;
     }
+
+    /**
+     * Verificar si las notificaciones de stock bajo están habilitadas
+     */
+    public static function notificacionesStockBajoHabilitadas(): bool
+    {
+        $ajuste = static::getOrCreate();
+        return ($ajuste->stock_alerta_habilitada ?? true) && ($ajuste->notif_stock_bajo ?? true);
+    }
+
+    /**
+     * Verificar si las notificaciones de ventas están habilitadas
+     */
+    public static function notificacionesVentaHabilitadas(): bool
+    {
+        $ajuste = static::getOrCreate();
+        return ($ajuste->notif_venta_realizada ?? true);
+    }
+
+    /**
+     * Verificar si las notificaciones de compras están habilitadas
+     */
+    public static function notificacionesCompraHabilitadas(): bool
+    {
+        $ajuste = static::getOrCreate();
+        return ($ajuste->notif_compra_recibida ?? true);
+    }
 }
