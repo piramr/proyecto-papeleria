@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\Auditoria;
 
 use App\Models\Auditoria\AuditoriaDatos;
@@ -8,6 +9,7 @@ use App\Models\Auditoria\LogNivel;
 use App\Models\Auditoria\LogLogin;
 use App\Models\Auditoria\LogLoginResultado;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuditoriaService
 {
@@ -28,7 +30,7 @@ class AuditoriaService
         ]);
     }
 
-    // Registrar operación (log_operacion)
+    // Registrar operacion (log_operacion)
     public static function registrarOperacion($params)
     {
         return LogOperacion::create([
@@ -71,5 +73,101 @@ class AuditoriaService
             'ubicacion' => $params['ubicacion'] ?? null,
             'resultado_log_id' => $resultadoId,
         ]);
+    }
+
+    // ============ METODOS USANDO PROCEDIMIENTOS ALMACENADOS ============
+
+    public static function obtenerUltimaAuditoria(string $entidad, string $recursoId): int
+    {
+        $result = DB::select(
+            'SELECT fn_ultima_auditoria(?, ?) as id',
+            [$entidad, $recursoId]
+        );
+        return $result[0]->id ?? 0;
+    }
+
+    public static function contarCambiosPorUsuario(int $userId, string $fecha = null): int
+    {
+        if ($fecha === null) {
+            $fecha = now()->toDateString();
+        }
+        $result = DB::select(
+            'SELECT fn_cambios_por_usuario(?, ?) as total',
+            [$userId, $fecha]
+        );
+        return $result[0]->total ?? 0;
+    }
+
+    public static function usuarioActivo(int $userId): bool
+    {
+        $result = DB::select(
+            'SELECT fn_usuario_activo(?) as activo',
+            [$userId]
+        );
+        return (bool)($result[0]->activo ?? false);
+    }
+
+    public static function cambiosCriticosCount(): int
+    {
+        $result = DB::select('SELECT fn_cambios_criticos_count() as total');
+        return $result[0]->total ?? 0;
+    }
+
+    public static function limpiarLogsAntiguos(int $diasRetencion = 90): bool
+    {
+        try {
+            DB::statement('CALL sp_limpiar_logs_antiguos(?)', [$diasRetencion]);
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Error limpiando logs: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public static function generarReporte(string $fechaInicio, string $fechaFin): array
+    {
+        try {
+            return DB::select(
+                'SELECT * FROM sp_reporte_auditoria(?, ?)',
+                [$fechaInicio, $fechaFin]
+            );
+        } catch (\Exception $e) {
+            \Log::error('Error generando reporte: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public static function obtenerHistorialCambios(string $entidad, string $recursoId): array
+    {
+        try {
+            return DB::select(
+                'SELECT * FROM sp_historial_cambios(?, ?)',
+                [$entidad, $recursoId]
+            );
+        } catch (\Exception $e) {
+            \Log::error('Error obteniendo historial: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public static function validarIntegridad(int $userId): array
+    {
+        try {
+            $result = DB::select('SELECT * FROM sp_validar_usuario(?)', [$userId]);
+            return !empty($result) ? (array)$result[0] : [];
+        } catch (\Exception $e) {
+            \Log::error('Error validando integridad: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public static function obtenerCambiosCriticos(): array
+    {
+        try {
+            return DB::select('SELECT * FROM sp_cambios_criticos()');
+        } catch (\Exception $e) {
+            \Log::error('Error obteniendo cambios criticos: ' . $e->getMessage());
+            return [];
+        }
     }
 }

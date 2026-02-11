@@ -26,6 +26,12 @@ class AppServiceProvider extends ServiceProvider
         }
     
         // Define gates to use Role checks in "can" middleware/menus
+        // Registrar Observers
+        \App\Models\Producto::observe(\App\Observers\ProductoObserver::class);
+        \App\Models\Proveedor::observe(\App\Observers\ProveedorObserver::class);
+        \App\Models\Categoria::observe(\App\Observers\CategoriaObserver::class);
+
+        // Define gates to use Role checks in "can" middleware/menus
         \Illuminate\Support\Facades\Gate::define('Admin', function ($user) {
             return $user->hasRole('Admin');
         });

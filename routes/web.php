@@ -150,6 +150,11 @@ Route::middleware([
     Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
     Route::delete('/productos/{producto}', [ProductoController::class, 'destroy'])->name('productos.destroy');
 
+    // Rutas para movimientos de stock e inventario (nuevas con procedures)
+    Route::post('/productos/{producto}/movimiento-stock', [ProductoController::class, 'movimientoStock'])->name('productos.movimiento-stock');
+    Route::get('/productos/{producto}/analisis', [ProductoController::class, 'analisisInventario'])->name('productos.analisis');
+    Route::get('/productos/reporte/general', [ProductoController::class, 'reporteInventario'])->name('productos.reporte');
+
     Route::get('/proveedores/export-pdf', [ProveedorController::class, 'exportPdf'])->name('proveedores.export-pdf');
     Route::get('/proveedores/export-excel', [ProveedorController::class, 'exportExcel'])->name('proveedores.export-excel');
 

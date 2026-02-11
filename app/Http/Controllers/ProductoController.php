@@ -15,6 +15,13 @@ use App\Services\Auditoria\AuditoriaService;
 
 class ProductoController extends Controller
 {
+    protected $inventarioService;
+
+    public function __construct(\App\Services\InventarioService $inventarioService)
+    {
+        $this->inventarioService = $inventarioService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -445,5 +452,84 @@ class ProductoController extends Controller
 
         $writer->save('php://output');
         exit;
+    }
+
+    /**
+     * Actualizar stock de un producto
+     * POST: /productos/{id}/movimiento-stock
+     */
+    public function movimientoStock(Request $request, Producto $producto)
+    {
+        try {
+            $validated = $request->validate([
+                'cantidad' => 'required|integer|min:1',
+                'tipo' => 'required|in:entrada,salida',
+                'razon' => 'nullable|string|max:255',
+            ]);
+
+            // Validar si puede hacer la operación
+            if (!$this->inventarioService->validarMovimiento(
+                $producto->id,
+                $validated['cantidad'],
+                $validated['tipo']
+            )) {
+                return response()->json([
+                    'error' => 'Stock insuficiente para realizar esta operación'
+                ], 422);
+            }
+
+            // Realizar movimiento
+            $this->inventarioService->actualizarStock(
+                $producto->id,
+                $validated['cantidad'],
+                $validated['tipo'],
+                $validated['razon'] ?? '',
+                Auth::id()
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Movimiento registrado correctamente',
+                'stock_actual' => $this->inventarioService->obtenerStockDisponible($producto->id)
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en movimiento de stock: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error al registrar movimiento: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener detalles y análisis de inventario
+     * GET: /productos/{id}/analisis
+     */
+    public function analisisInventario(Producto $producto)
+    {
+        return response()->json([
+            'producto' => $producto,
+            'stock_disponible' => $this->inventarioService->obtenerStockDisponible($producto->id),
+            'precio_final' => $this->inventarioService->obtenerPrecioFinal($producto->id),
+            'movimientos_recientes' => $this->inventarioService->obtenerMovimientos($producto->id, 10),
+            'margen_ganancia' => $this->inventarioService->calcularMargenGanancia(
+                $producto->proveedores->first()?->pivot?->precio_costo ?? 0,
+                $producto->precio_unitario
+            )
+        ]);
+    }
+
+    /**
+     * Obtener reporte de inventario
+     * GET: /productos/reporte/general
+     */
+    public function reporteInventario()
+    {
+        return response()->json([
+            'valor_total' => $this->inventarioService->valorInventarioTotal(),
+            'inventario_por_categoria' => $this->inventarioService->valorInventarioPorCategoria(),
+            'productos_bajo_stock' => $this->inventarioService->obtenerProductosBajoStock(),
+            'productos_por_proveedor' => $this->inventarioService->productoPorProveedor(),
+        ]);
     }
 }
