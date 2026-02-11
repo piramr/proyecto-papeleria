@@ -92,6 +92,7 @@
                             <th class="ps-3 border-0">ID</th>
                             <th class="border-0">Timestamp</th>
                             <th class="border-0">Usuario / Sesión</th>
+                            <th class="border-0">Rol</th>
                             <th class="border-0">Operación</th>
                             <th class="border-0">Entidad</th>
                             <th class="border-0">Recurso_ID</th>
@@ -140,10 +141,13 @@
             else if (a.tipo_operacion === 'UPDATE') opClass = 'bg-warning text-dark';
             else if (a.tipo_operacion === 'DELETE') opClass = 'bg-danger';
             
+            var userRoles = a.user && a.user.roles ? a.user.roles.map(role => role.name).join(', ') : 'Sin rol';
+            
             return `<tr>
                 <td class='ps-3 text-muted'>${a.id || ''}</td>
                 <td>${a.timestamp || ''}</td>
                 <td>ID: ${a.user_id || '-'}<br><small class='text-muted' title='${sessionFull}' style='cursor: pointer;'>S: ${sessionShort}</small></td>
+                <td>${userRoles}</td>
                 <td><span class='badge badge-op ${opClass}'>${a.tipo_operacion || '-'}</span></td>
                 <td>${a.entidad || ''}</td>
                 <td><code>${a.recurso_id || ''}</code></td>

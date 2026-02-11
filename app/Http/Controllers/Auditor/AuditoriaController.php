@@ -20,7 +20,7 @@ class AuditoriaController extends Controller
         $recurso = $request->input('recurso');
         $operacion = $request->input('operacion');
         
-        $query = AuditoriaDatos::orderByDesc('timestamp');
+        $query = AuditoriaDatos::with('user.roles')->orderByDesc('timestamp');
         
         // Filtrar por recurso/entidad
         if ($recurso && $recurso !== 'Todos') {

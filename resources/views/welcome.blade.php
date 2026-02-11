@@ -131,7 +131,7 @@
             </p>
         </div>
 
-        <!-- Cards Section -->
+        {{-- <!-- Cards Section -->
         <div class="grid w-full max-w-6xl grid-cols-1 gap-8 mx-auto lg:grid-cols-3 relative z-10">
             
             <!-- Admin Card - Indigo Theme -->
@@ -207,7 +207,7 @@
                 </div>
             </a>
 
-        </div>
+        </div> --}}
 
         <!-- Footer -->
         <footer class="mt-20 text-center text-sm text-gray-400">
