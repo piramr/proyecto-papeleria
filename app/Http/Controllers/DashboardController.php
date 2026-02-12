@@ -66,20 +66,11 @@ class DashboardController extends Controller
         // Stock total de productos
         $stockTotal = Producto::sum('cantidad_stock');
         
-        // Productos con bajo stock (menos de 10 unidades)
-        $productosBajoStock = Producto::where('cantidad_stock', '<', 10)->count();
+        // Productos con bajo stock (según stock_minimo de cada producto)
+        $productosBajoStock = Producto::where('cantidad_stock', '<', DB::raw('stock_minimo'))->count();
 
-        // Ingresos por mes (últimos 6 meses) - Compatible con SQLite
-        $ingresosPorMes = Factura::select(
-        DB::raw("to_char(fecha_hora, 'MM') as mes"),
-        DB::raw("to_char(fecha_hora, 'YYYY') as anio"),
-        DB::raw('SUM(total) as total')
-        )
-        ->where('fecha_hora', '>=', Carbon::now()->subMonths(6)->startOfMonth())
-        ->groupBy('anio', 'mes')
-        ->orderBy('anio', 'asc')
-        ->orderBy('mes', 'asc')
-        ->get();
+        // Ingresos por mes (últimos 6 meses) - Genera todos los meses incluso sin datos
+        $ingresosPorMes = $this->obtenerIngresosPor6Meses();
 
         // Productos más vendidos
         $productosMasVendidos = DB::table('factura_detalles')
@@ -129,4 +120,47 @@ class DashboardController extends Controller
             'utilidadMes'
         ));
     }
+
+    /**
+     * Obtiene los ingresos de los últimos 6 meses, incluyendo meses sin datos
+     */
+    private function obtenerIngresosPor6Meses()
+    {
+        // Obtener todos los datos de facturas de los últimos 6 meses
+        $facturas = Factura::select(
+            DB::raw("TO_CHAR(fecha_hora, 'YYYY-MM') as yearmes"),
+            DB::raw("EXTRACT(YEAR FROM fecha_hora)::INTEGER as anio"),
+            DB::raw("EXTRACT(MONTH FROM fecha_hora)::INTEGER as mes"),
+            DB::raw('SUM(total) as total')
+        )
+        ->where('fecha_hora', '>=', Carbon::now()->subMonths(6)->startOfMonth())
+        ->groupBy(DB::raw("TO_CHAR(fecha_hora, 'YYYY-MM')"), DB::raw("EXTRACT(YEAR FROM fecha_hora)"), DB::raw("EXTRACT(MONTH FROM fecha_hora)"))
+        ->orderBy(DB::raw("TO_CHAR(fecha_hora, 'YYYY-MM')"), 'asc')
+        ->get();
+
+        // Crear un array asociativo para búsqueda rápida (usando yearmes como clave)
+        $facturasMap = [];
+        foreach ($facturas as $f) {
+            $facturasMap[$f->yearmes] = $f->total;
+        }
+
+        // Generar los últimos 6 meses
+        $ingresos = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $fecha = Carbon::now()->subMonths($i)->startOfMonth();
+            $mes = $fecha->month;
+            $yearmes = $fecha->format('Y-m');
+            
+            // Si existe en los datos, usar ese total, de lo contrario usar 0
+            $total = isset($facturasMap[$yearmes]) ? floatval($facturasMap[$yearmes]) : 0;
+            
+            $ingresos[] = (object)[
+                'mes' => $mes,
+                'total' => $total
+            ];
+        }
+
+        return collect($ingresos);
+    }
 }
+
